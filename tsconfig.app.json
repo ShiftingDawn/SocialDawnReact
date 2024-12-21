@@ -18,7 +18,13 @@
 		"noUnusedLocals": true,
 		"noUnusedParameters": true,
 		"noFallthroughCasesInSwitch": true,
-		"noUncheckedSideEffectImports": true
+		"noUncheckedSideEffectImports": true,
+		"paths": {
+			"@sys/*": ["./src/system/*"],
+			"@lib/*": ["./src/lib/*"],
+			"@page/*": ["./src/page/*"],
+			"$/*": ["./src/components/*"]
+		}
 	},
 	"include": ["src"]
 }
