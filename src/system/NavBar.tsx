@@ -6,7 +6,7 @@ import { useState } from "react";
 
 function NavBar() {
 	return (
-		<AppBar position={"sticky"} sx={{ flexGrow: 1 }}>
+		<AppBar position={"static"} sx={{flex: "0 0"}}>
 			<Toolbar component={"nav"} sx={{ justifyContent: "space-between" }}>
 				<HomeButton />
 				{/* TODO fav bar */}
