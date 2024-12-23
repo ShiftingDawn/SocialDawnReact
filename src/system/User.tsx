@@ -45,6 +45,8 @@ function UserWrapper({ children }: PropsWithChildren) {
 				setData({ loading: false, token: null });
 				setCachedAuthState(false);
 			});
+		} else {
+			setData({ loading: false, token: null });
 		}
 	}, []);
 
