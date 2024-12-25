@@ -1,5 +1,5 @@
 import { Box, Button, Card, CardActions, CardContent, Container } from "@mui/material";
-import { PageTitle } from "$/Title.tsx";
+import { PageTitle } from "$/Text.tsx";
 import { useUser } from "@sys/User.tsx";
 import { Link } from "react-router";
 
