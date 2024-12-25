@@ -2,6 +2,7 @@ import { createContext, PropsWithChildren, useContext, useEffect, useState } fro
 import { UserProfileDTO } from "#/UserProfileDTO.ts";
 import { LoginResponseDTO } from "#/LoginDTO";
 import { axios } from "@lib/axios.ts";
+import BootScreen from "@sys/BootScreen.tsx";
 
 type UserContextType = { loading: boolean, token: string | null } & Partial<UserProfileDTO>;
 const defaultContextValue: UserContextType = { loading: true, token: null };
@@ -60,8 +61,7 @@ function UserWrapper({ children }: PropsWithChildren) {
 			delete axios.defaults.headers.common["Authorization"];
 		}
 	}, [data.token]);
-
-	return (
+	return data.loading ? <BootScreen/> : (
 		<AuthContext.Provider value={{
 			signIn: handleToken,
 			signOut: () => handleToken(null),

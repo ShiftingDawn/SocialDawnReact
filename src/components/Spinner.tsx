@@ -1,0 +1,18 @@
+import { CSSProperties } from "react";
+import { Box } from "@mui/material";
+
+interface SpinnerProps {
+	size?: CSSProperties["width"];
+	lineSize?: CSSProperties["width"];
+}
+
+export function Spinner({ size = 48, lineSize = 5}: SpinnerProps) {
+	return (
+		<Box aria-hidden={true} width={size} height={size} border={lineSize} borderRadius={"50%"} display={"inline-block"}
+			 sx={{
+				 borderColor: theme => `${theme.palette.primary.main} transparent`,
+				 animation: "1s spin infinite linear",
+			 }}
+		/>
+	);
+}
