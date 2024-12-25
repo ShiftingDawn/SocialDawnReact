@@ -5,6 +5,7 @@ import { axios, useApi } from "@lib/axios.ts";
 import { FriendRequestResponseDTO } from "#/FriendRequestDTO.ts";
 import { useEffect, useState } from "react";
 import { success } from "@lib/notify.ts";
+import { Spinner } from "$/Spinner.tsx";
 
 function PageSocialSettings() {
 	return (
@@ -34,7 +35,7 @@ function PageSocialSettings() {
 export default PageSocialSettings;
 
 function SentFriendRequests() {
-	const [{ data }, refetch] = useApi<FriendRequestResponseDTO[]>("/friend/request");
+	const [{ data, loading }, refetch] = useApi<FriendRequestResponseDTO[]>("/friend/request");
 	const [page, setPage] = useState<number>(1);
 	const [items, setItems] = useState<FriendRequestResponseDTO[]>([]);
 
@@ -59,7 +60,16 @@ function SentFriendRequests() {
 								onChange={(_, newPage) => setPage(newPage)} />
 				</Box>
 			)}
-			{items.map(item => (
+			{loading ? (
+				<Box display={"flex"} gap={1} alignItems={"center"}>
+					<Spinner />
+					<span>Loading friend requests</span>
+				</Box>
+			) : items.length === 0 ? (
+				<Box textAlign={"center"} component={"span"}>
+					There are no pending friend requests
+				</Box>
+			) : items.map(item => (
 				<Box key={item.id} p={1} display={"flex"} justifyContent={"space-between"}>
 					<Box>
 						<Typography variant={"body1"} component={"h3"}>{item.username}</Typography>

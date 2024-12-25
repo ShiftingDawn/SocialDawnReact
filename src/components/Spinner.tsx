@@ -6,9 +6,10 @@ interface SpinnerProps {
 	lineSize?: CSSProperties["width"];
 }
 
-export function Spinner({ size = 48, lineSize = 5}: SpinnerProps) {
+export function Spinner({ size = 24, lineSize = 3 }: SpinnerProps) {
 	return (
-		<Box aria-hidden={true} width={size} height={size} border={lineSize} borderRadius={"50%"} display={"inline-block"}
+		<Box aria-hidden={true} width={size} height={size} border={lineSize} borderRadius={"50%"}
+			 display={"inline-block"}
 			 sx={{
 				 borderColor: theme => `${theme.palette.primary.main} transparent`,
 				 animation: "1s spin infinite linear",
