@@ -34,7 +34,7 @@ export function AddFriendDialog({ open, setOpen }: AddFriendDialogProps) {
 	}
 
 	return (
-		<Dialog open={open} fullWidth maxWidth={"xs"}>
+		<Dialog open={open} fullWidth maxWidth={"xs"} onClose={handleCancel}>
 			<DialogTitle>Add friend</DialogTitle>
 			<DialogContent>
 				{error?.response?.data?.message === "already_requested" && (

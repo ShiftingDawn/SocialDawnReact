@@ -13,7 +13,6 @@ import {
 import {
 	AccountCircle as AccountCircleIcon,
 	AdminPanelSettings as IconAdminPanelSettings,
-	Chat as ChatIcon,
 	HomeOutlined as GoHomeIcon,
 	HomeRounded as HomeIcon,
 	Logout as LogoutIcon,
@@ -99,10 +98,6 @@ function UserMenu() {
 				<MenuItem component={Link} to="/profile" onClick={close}>
 					<ListItemIcon><AccountCircleIcon /></ListItemIcon>
 					<ListItemText>User profile</ListItemText>
-				</MenuItem>
-				<MenuItem component={Link} to="/account/social" onClick={close}>
-					<ListItemIcon><ChatIcon /></ListItemIcon>
-					<ListItemText>Social settings</ListItemText>
 				</MenuItem>
 				<MenuItem component={Link} to="/account" onClick={close}>
 					<ListItemIcon><IconAdminPanelSettings /></ListItemIcon>
