@@ -16,7 +16,9 @@ import {
 	Chat as ChatIcon,
 	AccountCircle as IconAccountCircle,
 	PeopleAlt as PeopleAltIcon,
-	Add as IconAdd, Close as CloseIcon,
+	Add as IconAdd,
+	Close as CloseIcon,
+	Check as CheckIcon,
 } from "@mui/icons-material";
 import { TabContext, TabList } from "@mui/lab";
 import { AddFriendDialog } from "$/AddFriendDialog.tsx";
@@ -24,6 +26,7 @@ import { axios, useApi } from "@lib/axios.ts";
 import { FriendRequestResponseDTO } from "#/FriendRequestDTO.ts";
 import { success } from "@lib/notify.ts";
 import { Spinner } from "$/Spinner.tsx";
+import { post, useEvent } from "@lib/event.ts";
 
 function HomePage() {
 	return (
@@ -73,19 +76,21 @@ function TabContentPending() {
 			<Button onClick={() => setAddFriendModalOpen(true)}>Add friend</Button>
 			<Divider />
 			<strong>Received requests</strong>
-			<span>No friend requests</span>
+			<FriendRequestList type={"received"} />
 			<Divider />
 			<strong>Sent requests</strong>
-			<SentFriendRequests />
+			<FriendRequestList type={"sent"} />
 			<AddFriendDialog open={addFriendModalOpen} setOpen={setAddFriendModalOpen} />
 		</Stack>
 	);
 }
 
-function SentFriendRequests() {
-	const [{ data, loading }, refetch] = useApi<FriendRequestResponseDTO[]>("/friend/request");
+function FriendRequestList({ type }: { type: "sent" | "received" }) {
+	const [{ data, loading }, refetch] = useApi<FriendRequestResponseDTO[]>("/friend/request/" + type);
 	const [page, setPage] = useState<number>(1);
 	const [items, setItems] = useState<FriendRequestResponseDTO[]>([]);
+
+	useEvent("friend_request_update", () => refetch());
 
 	useEffect(() => {
 		if (!data) setItems([]);
@@ -95,8 +100,19 @@ function SentFriendRequests() {
 
 	function handleDelete(id: string) {
 		setItems(items.filter((item) => item.id !== id));
-		axios.delete(`/friend/request/${id}`).then(() => {
+		axios.delete(`/friend/request/${type}/${id}`).then(() => {
 			refetch().then(() => success("Friend request deleted successfully."));
+		});
+	}
+
+	function handleAccept(id: string) {
+		if (type !== "received") return;
+		setItems(items.filter((item) => item.id !== id));
+		axios.post(`/friend/request/received/${id}`).then(() => {
+			refetch().then(() => {
+				post("friend_request_update");
+				success("Friend request accepted.");
+			});
 		});
 	}
 
@@ -111,10 +127,10 @@ function SentFriendRequests() {
 			{loading ? (
 				<Box display={"flex"} gap={1} alignItems={"center"}>
 					<Spinner />
-					<span>Loading friend requests</span>
+					<span>Loading</span>
 				</Box>
 			) : items.length === 0 ? (
-				<span>No sent requests</span>
+				<span>No requests</span>
 			) : items.map(item => (
 				<Box key={item.id} p={1} display={"flex"} justifyContent={"space-between"}>
 					<Box>
@@ -126,6 +142,12 @@ function SentFriendRequests() {
 						</Typography>
 					</Box>
 					<Box display={"flex"} alignItems={"center"}>
+						{type === "received" && (
+							<IconButton color={"success"} aria-label={"accept friend request"}
+										onClick={() => handleAccept(item.id)}>
+								<CheckIcon />
+							</IconButton>
+						)}
 						<IconButton color={"error"} aria-label={"delete friend request"}
 									onClick={() => handleDelete(item.id)}>
 							<CloseIcon />

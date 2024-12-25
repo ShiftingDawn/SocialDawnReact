@@ -3,6 +3,7 @@ import { useState } from "react";
 import { Caption } from "$/Text.tsx";
 import { AddFriendDTO } from "#/AddFriendDTO.ts";
 import { useApi } from "@lib/axios.ts";
+import { post } from "@lib/event.ts";
 
 interface AddFriendDialogProps {
 	open: boolean;
@@ -24,6 +25,7 @@ export function AddFriendDialog({ open, setOpen }: AddFriendDialogProps) {
 	function handleSubmit() {
 		if (isValid()) {
 			request({ data: { username: username.trim() } }).then(() => {
+				post("friend_request_update");
 				handleCancel();
 			});
 		}
