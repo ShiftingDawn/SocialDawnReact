@@ -45,14 +45,22 @@ function NavBar() {
 				sx={{ flex: "0 0", backgroundColor: "transparent", backdropFilter: "blur(4px)" }}>
 				<Toolbar
 					aria-hidden={true}
-					sx={{
-						position: "absolute",
-						left: 0,
-						right: 0,
-						backgroundColor: (theme) => theme.palette.primary.main,
-						opacity: onTop ? 1 : 0,
-						transition: "opacity .1s ease-in-out",
-					}}
+					sx={[
+						{
+							position: "absolute",
+							left: 0,
+							right: 0,
+							opacity: onTop ? 1 : 0,
+							transition: "opacity .1s ease-in-out",
+						},
+						(theme) => ({
+							backgroundColor: theme.palette.primary.main,
+						}),
+						(theme) =>
+							theme.applyStyles("dark", {
+								backgroundColor: theme.palette.background.default,
+							}),
+					]}
 				/>
 				<Toolbar
 					component={"nav"}
