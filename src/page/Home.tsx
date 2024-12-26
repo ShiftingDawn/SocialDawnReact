@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import {
+	Avatar,
 	Box,
 	Button,
 	Divider,
@@ -13,20 +14,22 @@ import {
 	Typography,
 } from "@mui/material";
 import {
-	Chat as ChatIcon,
 	AccountCircle as IconAccountCircle,
-	PeopleAlt as PeopleAltIcon,
 	Add as IconAdd,
-	Close as CloseIcon,
+	Chat as ChatIcon,
 	Check as CheckIcon,
+	Close as CloseIcon,
+	PeopleAlt as PeopleAltIcon,
 } from "@mui/icons-material";
 import { TabContext, TabList } from "@mui/lab";
 import { AddFriendDialog } from "$/AddFriendDialog.tsx";
 import { axios, useApi } from "@lib/axios.ts";
-import { FriendRequestResponseDTO } from "#/FriendRequestDTO.d.ts";
+import { FriendRequestResponseDTO } from "#/FriendRequestDTO";
 import { success } from "@lib/notify.ts";
 import { Spinner } from "$/Spinner.tsx";
 import { post, useEvent } from "@lib/event.ts";
+import { FriendDTO } from "#/FriendDTO";
+import { Outlet, useNavigate } from "react-router";
 
 function HomePage() {
 	return (
@@ -35,6 +38,7 @@ function HomePage() {
 				<Sidebar />
 			</Grid2>
 			<Grid2 size={{ xs: 12, sm: 9 }} component={Paper}>
+				<Outlet />
 			</Grid2>
 		</Grid2>
 	);
@@ -50,24 +54,33 @@ const StyledTab = styled(Tab)(({}) => ({
 }));
 
 function Sidebar() {
-	const [currenTab, setCurrenTab] = useState<"dm" | "online" | "all" | "pending">("dm");
+	const [currentTab, setCurrentTab] = useState<"dm" | "online" | "all" | "pending">("dm");
 	return (
-		<TabContext value={currenTab}>
+		<TabContext value={currentTab}>
 			<Box sx={{ borderBottom: 1, borderColor: "divider" }}>
-				<TabList onChange={(_, newTab) => setCurrenTab(newTab)} aria-label="Chat list types">
+				<TabList onChange={(_, newTab) => setCurrentTab(newTab)} aria-label="Chat list types">
 					<StyledTab value={"dm"} aria-label={"chats"} label={"Chats"} icon={<ChatIcon />} />
-					<StyledTab value={"online"} aria-label="online friends" label={"Online"}
-							   icon={<IconAccountCircle />} />
+					<StyledTab
+						value={"online"}
+						aria-label="online friends"
+						label={"Online"}
+						icon={<IconAccountCircle />}
+					/>
 					<StyledTab value={"all"} aria-label="all friends" label={"Friends"} icon={<PeopleAltIcon />} />
-					<StyledTab value={"pending"} aria-label="pending friend requests" label={"Requests"}
-							   icon={<IconAdd />} />
+					<StyledTab
+						value={"pending"}
+						aria-label="pending friend requests"
+						label={"Requests"}
+						icon={<IconAdd />}
+					/>
 				</TabList>
 			</Box>
-			{currenTab === "pending" && <TabContentPending />}
+			{currentTab === "all" && <FriendList type={"all"} />}
+			{currentTab === "online" && <FriendList type={"online"} />}
+			{currentTab === "pending" && <TabContentPending />}
 		</TabContext>
 	);
 }
-
 
 function TabContentPending() {
 	const [addFriendModalOpen, setAddFriendModalOpen] = useState(false);
@@ -120,8 +133,11 @@ function FriendRequestList({ type }: { type: "sent" | "received" }) {
 		<Stack spacing={2}>
 			{data && data.length > 10 && (
 				<Box sx={{ display: "flex", justifyContent: "center" }}>
-					<Pagination count={Math.ceil(data.length / 10)} page={page}
-								onChange={(_, newPage) => setPage(newPage)} />
+					<Pagination
+						count={Math.ceil(data.length / 10)}
+						page={page}
+						onChange={(_, newPage) => setPage(newPage)}
+					/>
 				</Box>
 			)}
 			{loading ? (
@@ -131,35 +147,122 @@ function FriendRequestList({ type }: { type: "sent" | "received" }) {
 				</Box>
 			) : items.length === 0 ? (
 				<span>No requests</span>
-			) : items.map(item => (
-				<Box key={item.id} p={1} display={"flex"} justifyContent={"space-between"}>
-					<Box>
-						<Typography variant={"body1"} component={"h3"}>{item.username}</Typography>
-						<Typography variant={"body2"} component={"span"}>Sent
-							at <time dateTime={new Date(item.sentAt).toISOString()}>
-								{new Date(item.sentAt).toLocaleDateString()}
-							</time>
-						</Typography>
-					</Box>
-					<Box display={"flex"} alignItems={"center"}>
-						{type === "received" && (
-							<IconButton color={"success"} aria-label={"accept friend request"}
-										onClick={() => handleAccept(item.id)}>
-								<CheckIcon />
+			) : (
+				items.map((item) => (
+					<Box key={item.id} p={1} display={"flex"} justifyContent={"space-between"}>
+						<Box>
+							<Typography variant={"body1"} component={"h3"}>
+								{item.username}
+							</Typography>
+							<Typography variant={"body2"} component={"span"}>
+								Sent at{" "}
+								<time dateTime={new Date(item.sentAt).toISOString()}>
+									{new Date(item.sentAt).toLocaleDateString()}
+								</time>
+							</Typography>
+						</Box>
+						<Box display={"flex"} alignItems={"center"}>
+							{type === "received" && (
+								<IconButton
+									color={"success"}
+									aria-label={"accept friend request"}
+									onClick={() => handleAccept(item.id)}>
+									<CheckIcon />
+								</IconButton>
+							)}
+							<IconButton
+								color={"error"}
+								aria-label={"delete friend request"}
+								onClick={() => handleDelete(item.id)}>
+								<CloseIcon />
 							</IconButton>
-						)}
-						<IconButton color={"error"} aria-label={"delete friend request"}
-									onClick={() => handleDelete(item.id)}>
-							<CloseIcon />
-						</IconButton>
+						</Box>
 					</Box>
-				</Box>
-			))}
+				))
+			)}
 			{data && data.length > 10 && (
 				<Box sx={{ display: "flex", justifyContent: "center" }}>
-					<Pagination count={Math.ceil(data.length / 10)} page={page}
-								onChange={(_, newPage) => setPage(newPage)} />
+					<Pagination
+						count={Math.ceil(data.length / 10)}
+						page={page}
+						onChange={(_, newPage) => setPage(newPage)}
+					/>
 				</Box>
+			)}
+		</Stack>
+	);
+}
+
+function FriendList({ type }: { type: "all" | "online" }) {
+	const [{ data }, refetch] = useApi<FriendDTO[]>(`/friend${type === "all" ? "" : "?online=true"}`);
+	const navigate = useNavigate();
+
+	useEffect(() => {
+		const interval = setInterval(() => {
+			refetch().catch(() => {});
+		}, 3000);
+		return () => {
+			clearInterval(interval);
+		};
+	}, []);
+
+	return (
+		<Stack spacing={2}>
+			{data === undefined ? (
+				<Box sx={{ display: "flex", gap: 1, alignItems: "center" }}>
+					<Spinner />
+					<span>Loading</span>
+				</Box>
+			) : data.length === 0 ? (
+				<Box
+					sx={{
+						display: "flex",
+						alignItems: "center",
+						justifyContent: "center",
+						flexDirection: "column",
+						pt: 2,
+					}}>
+					<Typography variant={"h4"} aria-hidden={true}>
+						(´•︵•`)
+					</Typography>
+					{type === "online" && <Typography>No friends are online</Typography>}
+					{type === "all" && <Typography>It's lonely here</Typography>}
+				</Box>
+			) : (
+				data.map((friend) => (
+					<Box
+						key={friend.friendId}
+						sx={[
+							{
+								p: 1,
+								display: "flex",
+								alignItems: "center",
+								justifyContent: "space-between",
+								transition: "background .1s ease-in-out",
+								cursor: "pointer",
+								"&:hover": {
+									backgroundColor: "rgba(0,0,0,.1)",
+								},
+							},
+							(theme) =>
+								theme.applyStyles("dark", {
+									"&:hover": {
+										backgroundColor: "rgba(255,255,255,.1)",
+									},
+								}),
+						]}
+						role={"link"}
+						aria-label={"open chat"}
+						onClick={() => navigate(`/dm/${friend.friendId}`)}>
+						<Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+							<Avatar aria-hidden={true} src={friend.thumbnail} />
+							<Typography variant={"body1"} component={"h3"}>
+								{friend.username}
+							</Typography>
+						</Box>
+						<Box></Box>
+					</Box>
+				))
 			)}
 		</Stack>
 	);

@@ -8,6 +8,7 @@ import PageAccountSettings from "@page/AccountSettings.tsx";
 import PageAccountChangePassword from "@page/AccountChangePassword.tsx";
 import { useEffect } from "react";
 import RegisterPage from "@page/Register.tsx";
+import UserChatPage from "@page/UserChat.tsx";
 
 function App() {
 	useEffect(() => {
@@ -15,6 +16,7 @@ function App() {
 			const top = document.getElementById("pagecontainer")!.offsetTop;
 			document.getElementById("pagecontainer")!.style.minHeight = `calc(100% - ${top}px)`;
 		}
+
 		calcHeight();
 		window.addEventListener("resize", calcHeight);
 		return () => {
@@ -28,7 +30,9 @@ function App() {
 			<Toolbar aria-hidden={true} />
 			<Box sx={{ py: 1 }} id={"pagecontainer"}>
 				<Routes>
-					<Route index element={<HomePage />} />
+					<Route path={"/"} element={<HomePage />}>
+						<Route path={"dm/:userId"} element={<UserChatPage />} />
+					</Route>
 					<Route path={"*"} element={<NotFoundPage />} />
 					<Route path={"/login"} element={<LoginPage />} />
 					<Route path={"/register"} element={<RegisterPage />} />
