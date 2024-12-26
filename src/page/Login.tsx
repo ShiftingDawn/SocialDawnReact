@@ -1,6 +1,6 @@
 import { FormEventHandler, useState } from "react";
-import { Button, Container, Paper, Stack, TextField } from "@mui/material";
-import { useNavigate } from "react-router";
+import { Button, Container, Divider, Paper, Stack, TextField } from "@mui/material";
+import { Link, useNavigate } from "react-router";
 import { LoginRequestDTO, LoginResponseDTO } from "#/LoginDTO";
 import { useAuth } from "@sys/User.tsx";
 import { axios } from "@lib/axios.ts";
@@ -14,13 +14,15 @@ function LoginPage() {
 
 	const tryLogin: FormEventHandler = (event) => {
 		event.preventDefault();
-		axios.post<LoginResponseDTO>("/auth/login", {
-			email: email,
-			password: password,
-		} satisfies LoginRequestDTO).then(res => {
-			signIn(res.data.accessToken);
-			navigate("/");
-		});
+		axios
+			.post<LoginResponseDTO>("/auth/login", {
+				email: email,
+				password: password,
+			} satisfies LoginRequestDTO)
+			.then((res) => {
+				signIn(res.data.accessToken);
+				navigate("/");
+			});
 	};
 
 	return (
@@ -28,11 +30,29 @@ function LoginPage() {
 			<Paper sx={{ p: 2 }}>
 				<form onSubmit={tryLogin}>
 					<Stack spacing={2}>
-						<TextField fullWidth label={"Email"} value={email} onChange={(e) => setEmail(e.target.value)} />
-						<TextField fullWidth label={"Password"} value={password} onChange={(e) => setPassword(e.target.value)} type={"password"} />
+						<TextField
+							fullWidth
+							label={"Email"}
+							value={email}
+							onChange={(e) => setEmail(e.target.value)}
+							type={"email"}
+							autoComplete={"email"}
+						/>
+						<TextField
+							fullWidth
+							label={"Password"}
+							value={password}
+							onChange={(e) => setPassword(e.target.value)}
+							type={"password"}
+							autoComplete={"current-password"}
+						/>
 						<Button type={"submit"}>Sign in</Button>
 					</Stack>
 				</form>
+				<Divider />
+				<p>
+					Don't have an account yet? <Link to={"/register"}>Make one</Link>
+				</p>
 			</Paper>
 		</Container>
 	);

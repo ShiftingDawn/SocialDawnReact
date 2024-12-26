@@ -7,6 +7,7 @@ import NotFoundPage from "@page/404.tsx";
 import PageAccountSettings from "@page/AccountSettings.tsx";
 import PageAccountChangePassword from "@page/AccountChangePassword.tsx";
 import { useEffect } from "react";
+import RegisterPage from "@page/Register.tsx";
 
 function App() {
 	useEffect(() => {
@@ -18,7 +19,7 @@ function App() {
 		window.addEventListener("resize", calcHeight);
 		return () => {
 			window.removeEventListener("resize", calcHeight);
-		}
+		};
 	}, []);
 
 	return (
@@ -30,6 +31,7 @@ function App() {
 					<Route index element={<HomePage />} />
 					<Route path={"*"} element={<NotFoundPage />} />
 					<Route path={"/login"} element={<LoginPage />} />
+					<Route path={"/register"} element={<RegisterPage />} />
 					<Route path={"/account"} element={<PageAccountSettings />} />
 					<Route path={"/account/changepassword"} element={<PageAccountChangePassword />} />
 				</Routes>

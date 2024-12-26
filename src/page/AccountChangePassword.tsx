@@ -2,7 +2,7 @@ import { Alert, Button, Container, Paper, Stack, TextField } from "@mui/material
 import { PageTitle } from "$/Text.tsx";
 import { FormEvent, useMemo, useState } from "react";
 import { useApi } from "@lib/axios.ts";
-import { ChangePasswordDTO } from "#/ChangePasswordDTO.ts";
+import { ChangePasswordDTO } from "#/ChangePasswordDTO.d.ts";
 
 function PageAccountChangePassword() {
 	const [currentPassword, setCurrentPassword] = useState<string>("");

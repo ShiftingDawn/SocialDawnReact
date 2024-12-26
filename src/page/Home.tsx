@@ -23,7 +23,7 @@ import {
 import { TabContext, TabList } from "@mui/lab";
 import { AddFriendDialog } from "$/AddFriendDialog.tsx";
 import { axios, useApi } from "@lib/axios.ts";
-import { FriendRequestResponseDTO } from "#/FriendRequestDTO.ts";
+import { FriendRequestResponseDTO } from "#/FriendRequestDTO.d.ts";
 import { success } from "@lib/notify.ts";
 import { Spinner } from "$/Spinner.tsx";
 import { post, useEvent } from "@lib/event.ts";

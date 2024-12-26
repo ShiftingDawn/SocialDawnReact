@@ -1,5 +1,5 @@
 import { createContext, PropsWithChildren, useContext, useEffect, useState } from "react";
-import { UserProfileDTO } from "#/UserProfileDTO.ts";
+import { UserProfileDTO } from "#/UserProfileDTO.d.ts";
 import { LoginResponseDTO } from "#/LoginDTO";
 import { axios } from "@lib/axios.ts";
 import BootScreen from "@sys/BootScreen.tsx";
