@@ -1,14 +1,26 @@
 import { createTheme } from "@mui/material";
-import type {} from "@mui/lab/themeAugmentation";
 import { deepPurple, grey, purple } from "@mui/material/colors";
 
 const theme = createTheme({
-	palette: {
-		background: {
-			default: grey[100],
+	colorSchemes: {
+		light: {
+			palette: {
+				primary: purple,
+				secondary: deepPurple,
+				background: {
+					default: grey[100],
+				},
+			},
 		},
-		primary: purple,
-		secondary: deepPurple,
+		dark: {
+			palette: {
+				primary: purple,
+				secondary: deepPurple,
+				background: {
+					default: grey[800],
+				},
+			},
+		},
 	},
 	typography: {
 		fontFamily: "Raleway,serif",
