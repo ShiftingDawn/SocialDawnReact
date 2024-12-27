@@ -33,11 +33,14 @@ import { Outlet, useNavigate } from "react-router";
 
 function HomePage() {
 	return (
-		<Grid2 container spacing={2} sx={{ px: { xs: 0, md: 1 }, height: "100%" }}>
+		<Grid2
+			container
+			spacing={2}
+			sx={{ px: { xs: 0, md: 1 }, height: "100%", maxHeight: "100%", overflow: "hidden" }}>
 			<Grid2 size={{ xs: 12, sm: 3 }} component={Paper}>
 				<Sidebar />
 			</Grid2>
-			<Grid2 size={{ xs: 12, sm: 9 }} component={Paper}>
+			<Grid2 size={{ xs: 12, sm: 9 }} component={Paper} sx={{ maxHeight: "100%" }}>
 				<Outlet />
 			</Grid2>
 		</Grid2>
