@@ -1,7 +1,7 @@
 import { Alert, Button, Dialog, DialogActions, DialogContent, DialogTitle, TextField } from "@mui/material";
 import { useState } from "react";
 import { Caption } from "$/Text.tsx";
-import { AddFriendDTO } from "#/AddFriendDTO.d.ts";
+import { AddFriendDTO } from "#/AddFriendDTO";
 import { useApi } from "@lib/axios.ts";
 import { post } from "@lib/event.ts";
 
