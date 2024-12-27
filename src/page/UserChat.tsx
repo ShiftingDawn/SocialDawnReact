@@ -1,12 +1,13 @@
 import { useParams } from "react-router";
-import { useApi } from "@lib/axios.ts";
+import { getApiBaseUrl, useApi } from "@lib/axios.ts";
 import * as React from "react";
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Box, TextField, Typography } from "@mui/material";
 import { Spinner } from "$/Spinner.tsx";
 import { DmDTO } from "#/DmDTO";
 import { DmMessageDTO } from "#/DmMessageDTO.ts";
 import { Time } from "$/Time.tsx";
+import { io } from "socket.io-client";
 
 function UserChatPage() {
 	const { userId } = useParams();
@@ -42,7 +43,7 @@ function UserChatPage() {
 							px: 2,
 							pt: 1,
 						}}>
-						<TextField fullWidth variant={"standard"} />
+						<Chatbar dm={data.dmId} />
 					</Box>
 				</>
 			)}
@@ -51,6 +52,30 @@ function UserChatPage() {
 }
 
 export default UserChatPage;
+
+function Chatbar({ dm }: { dm: string }) {
+	const socket = useMemo(() => {
+		return io(`${getApiBaseUrl()}dm`, {
+			autoConnect: false,
+		});
+	}, [dm]);
+
+	useEffect(() => {
+		socket.on("message", console.log);
+		socket.connect();
+		return () => {
+			socket.disconnect();
+		};
+	}, [socket]);
+
+	useEffect(() => {
+		if (socket.active) {
+			socket.emit("message", "test");
+		}
+	}, [socket.active]);
+
+	return <TextField fullWidth variant={"standard"} />;
+}
 
 function MessageList({ dm }: { dm: string }) {
 	const [messages, setMessages] = useState<DmMessageDTO[]>(makeMsgs());
