@@ -5,6 +5,7 @@ import App from "@sys/App.tsx";
 import theme from "@lib/theme.ts";
 import UserWrapper from "@sys/User.tsx";
 import { Toaster } from "sonner";
+import SocketHandler from "@sys/SocketHandler.tsx";
 
 createRoot(document.getElementById("root")!).render(
 	<StrictMode>
@@ -12,7 +13,9 @@ createRoot(document.getElementById("root")!).render(
 			<CssBaseline enableColorScheme />
 			<Toaster position={"bottom-center"} />
 			<UserWrapper>
-				<App />
+				<SocketHandler>
+					<App />
+				</SocketHandler>
 			</UserWrapper>
 		</ThemeProvider>
 	</StrictMode>,

@@ -197,17 +197,8 @@ function FriendRequestList({ type }: { type: "sent" | "received" }) {
 }
 
 function FriendList({ type }: { type: "all" | "online" }) {
-	const [{ data }, refetch] = useApi<FriendDTO[]>(`/friend${type === "all" ? "" : "?online=true"}`);
+	const [{ data }] = useApi<FriendDTO[]>(`/friend${type === "all" ? "" : "?online=true"}`);
 	const navigate = useNavigate();
-
-	useEffect(() => {
-		const interval = setInterval(() => {
-			refetch().catch(() => {});
-		}, 3000);
-		return () => {
-			clearInterval(interval);
-		};
-	}, []);
 
 	return (
 		<Stack spacing={2}>

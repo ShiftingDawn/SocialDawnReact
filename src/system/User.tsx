@@ -1,8 +1,9 @@
-import { createContext, PropsWithChildren, useContext, useEffect, useState } from "react";
-import { UserProfileDTO } from "#/UserProfileDTO.d.ts";
+import { createContext, PropsWithChildren, useCallback, useContext, useEffect, useState } from "react";
+import { UserProfileDTO } from "#/UserProfileDTO";
 import { LoginResponseDTO } from "#/LoginDTO";
 import { axios } from "@lib/axios.ts";
 import BootScreen from "@sys/BootScreen.tsx";
+import createAuthRefreshInterceptor from "axios-auth-refresh";
 
 type UserContextType = { loading: boolean, token: string | null } & Partial<UserProfileDTO>;
 const defaultContextValue: UserContextType = { loading: true, token: null };
@@ -21,55 +22,53 @@ const AuthContext = createContext<AuthContextType>({
 });
 export const useAuth = () => useContext(AuthContext);
 
-function setCachedAuthState(state: boolean) {
-	if (state) {
-		localStorage.setItem("wasauthenticated", "true");
-	} else {
-		localStorage.removeItem("wasauthenticated");
-	}
-}
-
 function UserWrapper({ children }: PropsWithChildren) {
 	const [data, setData] = useState<UserContextType>(defaultContextValue);
 
-	function handleToken(token: string | null) {
-		setData({ token, loading: !!token });
-		setCachedAuthState(!!token);
+	function update(data: Partial<UserContextType>) {
+		setData(current => ({ ...current, ...data }));
 	}
 
-	useEffect(() => {
-		if (localStorage.getItem("wasauthenticated")) {
-			axios.post<LoginResponseDTO>("/auth/refresh").then(async tokenResponse => {
-				setData({ loading: true, token: tokenResponse.data.accessToken });
-				setCachedAuthState(true);
-			}).catch(() => {
-				setData({ loading: false, token: null });
-				setCachedAuthState(false);
-			});
-		} else {
-			setData({ loading: false, token: null });
-		}
+	const fetchToken = useCallback(async () => {
+		const tokenResponse = await axios.post<LoginResponseDTO>("/auth/refresh");
+		update({ loading: true, token: tokenResponse.data.accessToken });
+		return tokenResponse.data.accessToken;
 	}, []);
 
 	useEffect(() => {
-		if (data.token) {
-			axios.defaults.headers.common["Authorization"] = `Bearer ${data.token}`;
-			axios.get<UserProfileDTO>("/user/profile").then(profileResponse => {
-				setData({ loading: false, token: data.token, ...profileResponse.data });
+		fetchToken().then((token) => {
+			axios.get<UserProfileDTO>("/user/profile", { headers: { Authorization: `Bearer ${token}` } }).then(profileResponse => {
+				update({ loading: false, ...profileResponse.data });
 			});
-		} else {
-			delete axios.defaults.headers.common["Authorization"];
-		}
+		});
+		createAuthRefreshInterceptor(axios, async function(failedRequest) {
+			const token = await fetchToken();
+			failedRequest.response.config.headers["Authorization"] = `Bearer ${token}`;
+			return await Promise.resolve();
+		});
+	}, [fetchToken]);
+
+	useEffect(() => {
+		const interceptor = axios.interceptors.request.use((request) => {
+			if (data.token) {
+				request.headers["Authorization"] = `Bearer ${data.token}`;
+			}
+			return request;
+		});
+		return () => {
+			axios.interceptors.request.eject(interceptor);
+		};
 	}, [data.token]);
-	return data.loading ? <BootScreen/> : (
-		<AuthContext.Provider value={{
-			signIn: handleToken,
-			signOut: () => handleToken(null),
-		}}>
-			<UserContext.Provider value={data}>
-				{children}
-			</UserContext.Provider>
-		</AuthContext.Provider>
+
+	return data.loading ? <BootScreen /> : (
+			<AuthContext.Provider value={{
+				signIn: (token) => update({ token, loading: false }),
+				signOut: () => setData({ token: null, loading: false }),
+			}}>
+				<UserContext.Provider value={data}>
+					{children}
+				</UserContext.Provider>
+			</AuthContext.Provider>
 	);
 }
 
