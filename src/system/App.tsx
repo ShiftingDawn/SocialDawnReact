@@ -13,18 +13,17 @@ import { PropsWithChildren } from "react";
 function App() {
 	return (
 		<BrowserRouter>
-			<Box sx={{ display: "flex", flexDirection: { xs: "column", sm: "row" } }}>
+			<Box sx={{ display: "flex", flexDirection: { xs: "column", sm: "row" }, height: "100%" }}>
 				<Drawer />
 				<Main>
 					<Routes>
-						<Route path={"/"} element={<HomePage />}>
-							<Route path={"dm/:userId"} element={<UserChatPage />} />
-						</Route>
+						<Route path={"/"} element={<HomePage />} />
 						<Route path={"*"} element={<NotFoundPage />} />
 						<Route path={"/login"} element={<LoginPage />} />
 						<Route path={"/register"} element={<RegisterPage />} />
 						<Route path={"/account"} element={<PageAccountSettings />} />
 						<Route path={"/account/changepassword"} element={<PageAccountChangePassword />} />
+						<Route path={"/dm/:dmId"} element={<UserChatPage />} />
 					</Routes>
 				</Main>
 			</Box>

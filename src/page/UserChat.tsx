@@ -11,8 +11,8 @@ import { useSocket } from "@lib/socket.ts";
 import { Add as AddIcon, ArrowDownward, EmojiEmotions as EmojiIcon, Send as SendIcon } from "@mui/icons-material";
 
 function UserChatPage() {
-	const { userId } = useParams();
-	const [{ data }] = useApi<DmDTO>(`/dm/friend/${userId}`);
+	const { dmId } = useParams();
+	const [{ data }] = useApi<DmDTO>(`/dm/${dmId}`);
 	const socket = useSocket();
 
 	useEffect(() => {

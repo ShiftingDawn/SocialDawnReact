@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Link } from "react-router";
+import { useEffect, useState } from "react";
+import { Link, useLocation, useNavigate } from "react-router";
 import {
 	AppBar,
 	Avatar,
@@ -32,16 +32,19 @@ import {
 	Menu as MenuIcon,
 	PeopleAlt as PeopleAltIcon,
 	SettingsBrightness as SettingsBrightnessIcon,
+	Tag as TagIcon,
 } from "@mui/icons-material";
 import { useAuth, useUser } from "@sys/User.tsx";
 import { TabContext, TabList } from "@mui/lab";
 import { AddFriendDialog } from "$/AddFriendDialog.tsx";
-import { useApi } from "@lib/axios.ts";
+import { axios, useApi } from "@lib/axios.ts";
 import { FriendDTO } from "#/FriendDTO";
 import { Spinner } from "$/Spinner.tsx";
 import { PendingRequestsDialog } from "$/PendingRequestsDialog.tsx";
 import { FriendRequestCountDTO } from "#/FriendRequestDTO";
 import { useEvent } from "@lib/event.ts";
+import { DmDTO } from "#/DmDTO";
+import { fErr } from "@lib/flash.ts";
 
 export const DRAWER_WIDTH = 300;
 
@@ -210,8 +213,24 @@ const StyledTab = styled(Tab)(({}) => ({
 	textTransform: "none",
 }));
 
+type TabPanelTab = "dm" | "friends" | "guilds" | "channels";
+
 function Sidebar() {
-	const [currentTab, setCurrentTab] = useState<"dm" | "friends" | "guilds" | "channels">("dm");
+	const [currentTab, setCurrentTab] = useState<TabPanelTab>("dm");
+	const { pathname } = useLocation();
+
+	useEffect(() => {
+		let expectedTab: TabPanelTab | null = null;
+		if (pathname.startsWith("/dm/")) {
+			expectedTab = "dm";
+		} else if (pathname.startsWith("/guild/")) {
+			expectedTab = "channels";
+		}
+		if (expectedTab && expectedTab !== currentTab) {
+			setCurrentTab(expectedTab);
+		}
+	}, [pathname]);
+
 	return (
 		<TabContext value={currentTab}>
 			<Box sx={{ borderBottom: 1, borderColor: "divider" }}>
@@ -219,12 +238,75 @@ function Sidebar() {
 					<StyledTab value={"dm"} aria-label={"chats"} label={"Chats"} icon={<ChatIcon />} />
 					<StyledTab value={"friends"} aria-label="friends" label={"Friends"} icon={<PeopleAltIcon />} />
 					<StyledTab value={"guilds"} aria-label="guilds" label={"Guilds"} icon={<PeopleAltIcon />} />
-					<StyledTab value={"channels"} aria-label="guild channels" label={"Channels"}
-					           icon={<PeopleAltIcon />} />
+					{pathname.startsWith("/guild/") && (
+						<StyledTab value={"channels"} aria-label="guild channels" label={"Channels"}
+						           icon={<TagIcon />} />
+					)}
 				</TabList>
 			</Box>
+			{currentTab === "dm" && <TabDms />}
 			{currentTab === "friends" && <TabFriends />}
 		</TabContext>
+	);
+}
+
+function TabDms() {
+	const [{ data }] = useApi<DmDTO[]>("/dm");
+	const navigate = useNavigate();
+
+	function openDm(dmId: string) {
+		navigate(`/dm/${dmId}`);
+	}
+
+	return (
+		<Stack>
+			{data === undefined ? (
+				<Box sx={{ display: "flex", gap: 1, alignItems: "center" }}>
+					<Spinner />
+					<span>Loading</span>
+				</Box>
+			) : data.length === 0 ? (
+				<Box sx={{
+					display: "flex",
+					alignItems: "center",
+					justifyContent: "center",
+					flexDirection: "column",
+					pt: 2,
+				}}>
+					<Typography variant={"h4"} aria-hidden={true}>
+						(´•︵•`)
+					</Typography>
+					<Typography>It's lonely here</Typography>
+				</Box>
+			) : data.map((dm) => (
+				<Box key={dm.dmId} sx={[
+					{
+						p: 1,
+						display: "flex",
+						alignItems: "center",
+						justifyContent: "space-between",
+						transition: "background .1s ease-in-out",
+						cursor: "pointer",
+						"&:hover": {
+							backgroundColor: "rgba(0,0,0,.1)",
+						},
+					},
+					(theme) =>
+						theme.applyStyles("dark", {
+							"&:hover": {
+								backgroundColor: "rgba(255,255,255,.1)",
+							},
+						}),
+				]} role={"link"} aria-label={"open chat"} onClick={() => openDm(dm.dmId)}>
+					<Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+						<Avatar aria-hidden={true} src={dm.thumbnail} />
+						<Typography variant={"body1"} component={"h3"}>
+							{dm.name}
+						</Typography>
+					</Box>
+				</Box>
+			))}
+		</Stack>
 	);
 }
 
@@ -233,11 +315,18 @@ function TabFriends() {
 	const [requestsModalOpen, setRequestsModalOpen] = useState(false);
 	const [{ data }, refetch] = useApi<FriendDTO[]>(`/friend`);
 	const [{ data: reqCount }, refetchReqCount] = useApi<FriendRequestCountDTO>("/friend/request/count");
+	const navigate = useNavigate();
 
 	useEvent("friend_request_update", () => {
 		refetch();
 		refetchReqCount();
 	});
+
+	function openDm(friendId: string) {
+		axios.get<DmDTO>(`/dm/friend/${friendId}`).then(res => {
+			navigate(`/dm/${res.data.dmId}`);
+		}).catch(() => fErr("Could not open chat"));
+	}
 
 	return (
 		<Stack>
@@ -256,14 +345,13 @@ function TabFriends() {
 					<span>Loading</span>
 				</Box>
 			) : data.length === 0 ? (
-				<Box
-					sx={{
-						display: "flex",
-						alignItems: "center",
-						justifyContent: "center",
-						flexDirection: "column",
-						pt: 2,
-					}}>
+				<Box sx={{
+					display: "flex",
+					alignItems: "center",
+					justifyContent: "center",
+					flexDirection: "column",
+					pt: 2,
+				}}>
 					<Typography variant={"h4"} aria-hidden={true}>
 						(´•︵•`)
 					</Typography>
@@ -288,14 +376,13 @@ function TabFriends() {
 								backgroundColor: "rgba(255,255,255,.1)",
 							},
 						}),
-				]} role={"link"} aria-label={"open chat"}>
+				]} role={"link"} aria-label={"open chat"} onClick={() => openDm(friend.friendId)}>
 					<Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
 						<Avatar aria-hidden={true} src={friend.thumbnail} />
 						<Typography variant={"body1"} component={"h3"}>
 							{friend.username}
 						</Typography>
 					</Box>
-					<Box></Box>
 				</Box>
 			))}
 		</Stack>
