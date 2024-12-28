@@ -2,8 +2,9 @@ import { useEffect } from "react";
 
 export function useEvent(name: string, callback: (event: Event) => void) {
 	useEffect(() => {
-		window.addEventListener(name, callback);
-		return () => window.removeEventListener(name, callback);
+		const c = callback;
+		window.addEventListener(name, c);
+		return () => window.removeEventListener(name, c);
 	}, [name, callback]);
 }
 

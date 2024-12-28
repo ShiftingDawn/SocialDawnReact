@@ -12,7 +12,7 @@ export const axios = Axios.create({
 	withCredentials: true,
 });
 
-configure({ axios });
+configure({ axios, cache: false });
 
 export function useApi<TResponse = any, TBody = any, TError = ErrorResponse>(
 	config: AxiosRequestConfig<TBody> | string,

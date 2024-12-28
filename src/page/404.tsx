@@ -5,7 +5,7 @@ import { ChevronLeft } from "@mui/icons-material";
 function NotFoundPage() {
 	const navigate = useNavigate();
 	return (
-		<Container maxWidth="xs">
+		<Container maxWidth="xs" sx={{ p: 3 }}>
 			<Card>
 				<CardContent sx={{ display: "flex", flexDirection: "column", gap: 4 }}>
 					<Typography variant={"h4"} component={"h1"} textAlign={"center"}>

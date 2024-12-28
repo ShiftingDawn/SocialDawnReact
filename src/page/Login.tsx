@@ -5,6 +5,7 @@ import { LoginRequestDTO, LoginResponseDTO } from "#/LoginDTO";
 import { useAuth } from "@sys/User.tsx";
 import { axios } from "@lib/axios.ts";
 import { fErr, fSuccess } from "@lib/flash.ts";
+import { PageTitle } from "$/Text.tsx";
 
 function LoginPage() {
 	const [email, setEmail] = useState("");
@@ -26,7 +27,8 @@ function LoginPage() {
 	};
 
 	return (
-		<Container maxWidth={"xs"}>
+		<Container maxWidth={"xs"} sx={{ p: 3 }}>
+			<PageTitle>Sign in</PageTitle>
 			<Paper sx={{ p: 2 }}>
 				<form onSubmit={tryLogin}>
 					<Stack spacing={2}>

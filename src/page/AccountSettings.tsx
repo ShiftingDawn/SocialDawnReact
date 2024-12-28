@@ -6,7 +6,7 @@ import { Link } from "react-router";
 function PageAccountSettings() {
 	const user = useUser();
 	return (
-		<Container maxWidth={"sm"}>
+		<Container maxWidth={"sm"} sx={{ pt: 3 }}>
 			<PageTitle>Account Settings</PageTitle>
 			<Box sx={{ p: 2, display: "flex", flexDirection: "column", gap: 2 }} component={"main"}>
 				<Card>

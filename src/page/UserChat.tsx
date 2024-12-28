@@ -158,19 +158,18 @@ function MessageList({ dm }: { dm: string }) {
 
 	return (
 		<Box ref={containerRef} sx={{
-			flex: "1 0",
-			height: "100%",
-			maxHeight: "100%",
+			flex: "1 0", height: "100%", maxHeight: "100%",
 			overflow: "auto",
-			display: "flex",
-			flexDirection: "column-reverse",
-			gap: 2,
-			px: 2,
+			display: "flex", flexDirection: "column-reverse",
+			gap: 2, px: 2, pt: 2, m: 0,
 		}} onScroll={handleScroll} component={"ol"} role={"list"}>
 			{!messages ? <Spinner /> : messages.map((msg) => <Message key={msg.messageId} msg={msg} />)}
 			<Zoom unmountOnExit in={!scrollAtBottom}>
-				<Fab color={"secondary"} sx={{ position: "absolute", right: 32 }} onClick={scrollChatToBottom}
-				     aria-label={"scroll chat to present"}>
+				<Fab color={"secondary"} sx={{
+					position: "absolute",
+					right: { xs: "50%", sm: "24px" },
+					translate: { xs: "50%", sm: "unset" },
+				}} onClick={scrollChatToBottom} aria-label={"scroll chat to present"}>
 					<ArrowDownward />
 				</Fab>
 			</Zoom>

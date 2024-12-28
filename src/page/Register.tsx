@@ -1,6 +1,6 @@
 import { FormEventHandler, useState } from "react";
-import { Button, Container, Paper, Stack, TextField, Typography } from "@mui/material";
-import { useNavigate } from "react-router";
+import { Button, Container, Divider, Paper, Stack, TextField, Typography } from "@mui/material";
+import { Link, useNavigate } from "react-router";
 import { useApi } from "@lib/axios.ts";
 import { RegisterDTO } from "#/RegisterDTO";
 import { PageTitle } from "$/Text.tsx";
@@ -41,7 +41,7 @@ function RegisterPage() {
 	};
 
 	return (
-		<Container maxWidth={"xs"}>
+		<Container maxWidth={"xs"} sx={{ p: 3 }}>
 			<PageTitle>Create new account</PageTitle>
 			<Paper sx={{ p: 2 }}>
 				<form onSubmit={tryRegister} aria-disabled={loading}>
@@ -89,6 +89,8 @@ function RegisterPage() {
 						</Button>
 					</Stack>
 				</form>
+				<Divider />
+				<p>Already have an account? <Link to={"/login"}>Sign in</Link></p>
 			</Paper>
 		</Container>
 	);

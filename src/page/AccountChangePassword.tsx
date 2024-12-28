@@ -2,7 +2,7 @@ import { Alert, Button, Container, Paper, Stack, TextField } from "@mui/material
 import { PageTitle } from "$/Text.tsx";
 import { FormEvent, useMemo, useState } from "react";
 import { useApi } from "@lib/axios.ts";
-import { ChangePasswordDTO } from "#/ChangePasswordDTO.d.ts";
+import { ChangePasswordDTO } from "#/ChangePasswordDTO";
 
 function PageAccountChangePassword() {
 	const [currentPassword, setCurrentPassword] = useState<string>("");
@@ -28,7 +28,7 @@ function PageAccountChangePassword() {
 	}
 
 	return (
-		<Container maxWidth={"xs"}>
+		<Container maxWidth={"xs"} sx={{ pt: 3 }}>
 			<PageTitle>Change password</PageTitle>
 			<Paper sx={{ p: 2 }}>
 				<form onSubmit={handleSubmit}>
@@ -37,17 +37,17 @@ function PageAccountChangePassword() {
 							<Alert severity={"success"}>Password has been updated!</Alert>
 						)}
 						<TextField fullWidth label={"Current password"} value={currentPassword}
-								   onChange={(e) => setCurrentPassword(e.target.value)} type={"password"}
-								   error={error?.response?.status === 401}
-								   helperText={error?.response?.status === 401 && "Invalid password"} />
+						           onChange={(e) => setCurrentPassword(e.target.value)} type={"password"}
+						           error={error?.response?.status === 401}
+						           helperText={error?.response?.status === 401 && "Invalid password"} />
 						<TextField fullWidth label={"New password"} value={password}
-								   onChange={(e) => setPassword(e.target.value)} type={"password"}
-								   error={hasPasswordTooWeakError || hasPasswordDontMatchError}
-								   helperText={hasPasswordTooWeakError && "Password is too weak"} />
+						           onChange={(e) => setPassword(e.target.value)} type={"password"}
+						           error={hasPasswordTooWeakError || hasPasswordDontMatchError}
+						           helperText={hasPasswordTooWeakError && "Password is too weak"} />
 						<TextField fullWidth label={"Confirm new password"} value={passwordConfirm}
-								   onChange={(e) => setPasswordConfirm(e.target.value)} type={"password"}
-								   error={hasPasswordDontMatchError}
-								   helperText={hasPasswordDontMatchError && "Passwords do not match"} />
+						           onChange={(e) => setPasswordConfirm(e.target.value)} type={"password"}
+						           error={hasPasswordDontMatchError}
+						           helperText={hasPasswordDontMatchError && "Passwords do not match"} />
 						<Button type={"submit"}>Submit</Button>
 					</Stack>
 				</form>

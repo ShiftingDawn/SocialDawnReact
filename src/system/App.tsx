@@ -1,47 +1,44 @@
-import { Box, Toolbar } from "@mui/material";
 import { BrowserRouter, Route, Routes } from "react-router";
+import { Box } from "@mui/material";
+import Drawer from "@sys/Drawer.tsx";
 import HomePage from "@page/Home.tsx";
 import LoginPage from "@page/Login.tsx";
-import NavBar from "@sys/NavBar.tsx";
 import NotFoundPage from "@page/404.tsx";
 import PageAccountSettings from "@page/AccountSettings.tsx";
 import PageAccountChangePassword from "@page/AccountChangePassword.tsx";
-import { useEffect } from "react";
 import RegisterPage from "@page/Register.tsx";
 import UserChatPage from "@page/UserChat.tsx";
+import { PropsWithChildren } from "react";
 
 function App() {
-	useEffect(() => {
-		function calcHeight() {
-			const top = document.getElementById("pagecontainer")!.offsetTop;
-			document.getElementById("pagecontainer")!.style.minHeight = `calc(100% - ${top}px)`;
-		}
-
-		calcHeight();
-		window.addEventListener("resize", calcHeight);
-		return () => {
-			window.removeEventListener("resize", calcHeight);
-		};
-	}, []);
-
 	return (
 		<BrowserRouter>
-			<NavBar />
-			<Toolbar aria-hidden={true} />
-			<Box sx={{ py: 1 }} id={"pagecontainer"}>
-				<Routes>
-					<Route path={"/"} element={<HomePage />}>
-						<Route path={"dm/:userId"} element={<UserChatPage />} />
-					</Route>
-					<Route path={"*"} element={<NotFoundPage />} />
-					<Route path={"/login"} element={<LoginPage />} />
-					<Route path={"/register"} element={<RegisterPage />} />
-					<Route path={"/account"} element={<PageAccountSettings />} />
-					<Route path={"/account/changepassword"} element={<PageAccountChangePassword />} />
-				</Routes>
+			<Box sx={{ display: "flex", flexDirection: { xs: "column", sm: "row" } }}>
+				<Drawer />
+				<Main>
+					<Routes>
+						<Route path={"/"} element={<HomePage />}>
+							<Route path={"dm/:userId"} element={<UserChatPage />} />
+						</Route>
+						<Route path={"*"} element={<NotFoundPage />} />
+						<Route path={"/login"} element={<LoginPage />} />
+						<Route path={"/register"} element={<RegisterPage />} />
+						<Route path={"/account"} element={<PageAccountSettings />} />
+						<Route path={"/account/changepassword"} element={<PageAccountChangePassword />} />
+					</Routes>
+				</Main>
 			</Box>
 		</BrowserRouter>
 	);
 }
 
 export default App;
+
+function Main({ children }: PropsWithChildren) {
+	return (
+		<Box component={"main"}
+		     sx={{ flexGrow: 1, overflow: "hidden", maxHeight: { xs: "calc(100vh - 56px)", sm: "100vh" } }}>
+			{children}
+		</Box>
+	);
+}
