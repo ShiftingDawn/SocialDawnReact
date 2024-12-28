@@ -8,7 +8,7 @@ interface NotificationProps {
 	message: ReactNode;
 }
 
-export function Notification({ toastId, type, message }: NotificationProps) {
+export function FlashMessage({ toastId, type, message }: NotificationProps) {
 	return (
 		<Alert severity={type} onClick={() => toast.dismiss(toastId)}
 			   sx={{ width: "var(--width)", boxShadow: 1 }}>

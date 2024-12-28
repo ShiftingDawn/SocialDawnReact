@@ -25,7 +25,7 @@ import { TabContext, TabList } from "@mui/lab";
 import { AddFriendDialog } from "$/AddFriendDialog.tsx";
 import { axios, useApi } from "@lib/axios.ts";
 import { FriendRequestResponseDTO } from "#/FriendRequestDTO";
-import { success } from "@lib/notify.ts";
+import { fSuccess } from "@lib/flash.ts";
 import { Spinner } from "$/Spinner.tsx";
 import { post, useEvent } from "@lib/event.ts";
 import { FriendDTO } from "#/FriendDTO";
@@ -117,7 +117,7 @@ function FriendRequestList({ type }: { type: "sent" | "received" }) {
 	function handleDelete(id: string) {
 		setItems(items.filter((item) => item.id !== id));
 		axios.delete(`/friend/request/${type}/${id}`).then(() => {
-			refetch().then(() => success("Friend request deleted successfully."));
+			refetch().then(() => fSuccess("Friend request deleted successfully."));
 		});
 	}
 
@@ -127,7 +127,7 @@ function FriendRequestList({ type }: { type: "sent" | "received" }) {
 		axios.post(`/friend/request/received/${id}`).then(() => {
 			refetch().then(() => {
 				post("friend_request_update");
-				success("Friend request accepted.");
+				fSuccess("Friend request accepted.");
 			});
 		});
 	}

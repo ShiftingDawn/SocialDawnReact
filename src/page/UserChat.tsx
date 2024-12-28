@@ -13,6 +13,18 @@ import { Add as AddIcon, EmojiEmotions as EmojiIcon, Send as SendIcon } from "@m
 function UserChatPage() {
 	const { userId } = useParams();
 	const [{ data }] = useApi<DmDTO>(`/dm/friend/${userId}`);
+	const socket = useSocket();
+
+	useEffect(() => {
+		const s = socket;
+		const dmId = data?.dmId;
+		if (s && dmId) {
+			s.emit("dm_connect", {dm: dmId});
+			return () => {
+				s.emit("dm_disconnect", {dm: dmId});
+			}
+		}
+	}, [socket, data]);
 
 	return (
 		<Box
@@ -47,7 +59,7 @@ function Chatbar({ dm }: { dm: string }) {
 		if (!socket || text.trim().length === 0) {
 			return;
 		}
-		socket.emit("dm", { dm, msg: text }, () => setText(""));
+		socket.emit("dm_msg", { dm, msg: text }, () => setText(""));
 	}
 
 	return (
@@ -87,20 +99,50 @@ function Chatbar({ dm }: { dm: string }) {
 
 function MessageList({ dm }: { dm: string }) {
 	const [messages, setMessages] = useState<DmMessageDTO[]>([]);
+	const socket = useSocket();
+
+	function addMessages(messages: DmMessageDTO[], prepend: boolean = false) {
+		if (prepend) {
+			setMessages(current => ([
+				...messages.filter(msg => !current.find((v) => v.messageId === msg.messageId)),
+				...current,
+			]));
+		} else {
+			setMessages(current => ([
+				...current,
+				...messages.filter(msg => !current.find((v) => v.messageId === msg.messageId)),
+			]));
+		}
+	}
 
 	function handleScroll(event: React.UIEvent) {
 		const list = event.target as HTMLOListElement;
 		const scrollY = Math.ceil(-list.scrollTop + list.clientHeight);
 		if (scrollY >= list.scrollHeight * 0.85) {
-			console.log("scroll");
-			//TODO fetch more
+			fetchMessages();
 		}
 	}
 
+	function fetchMessages() {
+		axios.get(`/dm/message/${dm}?take=50${messages.length === 0 ? "" : `&last=${messages[messages.length - 1].messageId}`}`)
+			.then((res) => addMessages(res.data));
+	}
+
+	function handleSocketMessage(msg: DmMessageDTO) {
+		addMessages([msg], true);
+	}
+
+	useEffect(() => fetchMessages(), []);
+
 	useEffect(() => {
-		axios.get(`/dm/message/${dm}`)
-			.then((res) => setMessages(res.data));
-	}, []);
+		if (socket) {
+			const s = socket;
+			s.on("message", handleSocketMessage);
+			return () => {
+				s.off("message", handleSocketMessage);
+			};
+		}
+	}, [socket]);
 
 	return (
 		<Box

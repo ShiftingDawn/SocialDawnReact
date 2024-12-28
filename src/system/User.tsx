@@ -4,6 +4,7 @@ import { LoginResponseDTO } from "#/LoginDTO";
 import { axios } from "@lib/axios.ts";
 import BootScreen from "@sys/BootScreen.tsx";
 import createAuthRefreshInterceptor from "axios-auth-refresh";
+import { fErr } from "@lib/flash.ts";
 
 type UserContextType = { loading: boolean, token: string | null } & Partial<UserProfileDTO>;
 const defaultContextValue: UserContextType = { loading: true, token: null };
@@ -35,16 +36,34 @@ function UserWrapper({ children }: PropsWithChildren) {
 		return tokenResponse.data.accessToken;
 	}, []);
 
+	function fetchProfile(token: string) {
+		axios.get<UserProfileDTO>("/user/profile", { headers: { Authorization: `Bearer ${token}` } }).then(profileResponse => {
+			update({ loading: false, ...profileResponse.data });
+		});
+	}
+
+	function handleSignOut() {
+		axios.post("/auth/destroy").then(() => {
+			setData({ token: null, loading: false });
+		});
+	}
+
 	useEffect(() => {
-		fetchToken().then((token) => {
-			axios.get<UserProfileDTO>("/user/profile", { headers: { Authorization: `Bearer ${token}` } }).then(profileResponse => {
-				update({ loading: false, ...profileResponse.data });
-			});
+		fetchToken().then(fetchProfile).catch(error => {
+			if (error?.status === 401 && error?.config?.url === "/auth/refresh") {
+				setData({ token: null, loading: false });
+			}
+			if (error?.code === "ERR_NETWORK") {
+				setData({ token: null, loading: false });
+				fErr("Could not connect to server");
+			}
 		});
 		createAuthRefreshInterceptor(axios, async function(failedRequest) {
 			const token = await fetchToken();
 			failedRequest.response.config.headers["Authorization"] = `Bearer ${token}`;
 			return await Promise.resolve();
+		}, {
+			shouldRefresh: (error) => error.config?.url !== "/auth/refresh",
 		});
 	}, [fetchToken]);
 
@@ -61,14 +80,17 @@ function UserWrapper({ children }: PropsWithChildren) {
 	}, [data.token]);
 
 	return data.loading ? <BootScreen /> : (
-			<AuthContext.Provider value={{
-				signIn: (token) => update({ token, loading: false }),
-				signOut: () => setData({ token: null, loading: false }),
-			}}>
-				<UserContext.Provider value={data}>
-					{children}
-				</UserContext.Provider>
-			</AuthContext.Provider>
+		<AuthContext.Provider value={{
+			signIn: (token) => {
+				update({ token, loading: false });
+				fetchProfile(token);
+			},
+			signOut: () => handleSignOut(),
+		}}>
+			<UserContext.Provider value={data}>
+				{children}
+			</UserContext.Provider>
+		</AuthContext.Provider>
 	);
 }
 

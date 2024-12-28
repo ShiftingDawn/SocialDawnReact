@@ -4,6 +4,7 @@ import { useNavigate } from "react-router";
 import { useApi } from "@lib/axios.ts";
 import { RegisterDTO } from "#/RegisterDTO";
 import { PageTitle } from "$/Text.tsx";
+import { fErr } from "@lib/flash.ts";
 
 function RegisterPage() {
 	const [{ loading, error }, request] = useApi<undefined, RegisterDTO>(
@@ -33,7 +34,9 @@ function RegisterPage() {
 				email: email,
 				password: password,
 			},
-		}).then(() => navigate("/login"));
+		})
+			.then(() => navigate("/login"))
+			.catch(() => fErr("Could not register new account."));
 	};
 
 	return (
@@ -42,61 +45,43 @@ function RegisterPage() {
 			<Paper sx={{ p: 2 }}>
 				<form onSubmit={tryRegister} aria-disabled={loading}>
 					<Stack spacing={2}>
-						<TextField
-							fullWidth
-							label={"Username"}
-							value={username}
-							onChange={(e) => setUsername(e.target.value)}
-							autoComplete={"username"}
-							error={Boolean(error?.response?.data?.message === "invalid_username")}
-							helperText={
-								Boolean(error?.response?.data?.message === "invalid_username") &&
-								"Enter a valid username"
-							}
+						<TextField fullWidth label={"Username"} value={username} autoComplete={"username"}
+						           onChange={(e) => setUsername(e.target.value)}
+						           error={Boolean(error?.response?.data?.message === "invalid_username")}
+						           helperText={
+							           Boolean(error?.response?.data?.message === "invalid_username") &&
+							           "Enter a valid username"
+						           }
 						/>
 						<Typography variant={"caption"} sx={{ pl: 1 }}>
 							A valid username must be at least 3 characters, at most 32 characters and contain only
 							letters, numbers, hyphens (-) and underscores (_)
 						</Typography>
-						<TextField
-							fullWidth
-							label={"Email"}
-							value={email}
-							onChange={(e) => setEmail(e.target.value)}
-							type={"email"}
-							autoComplete={"email"}
-							error={Boolean(error?.response?.data?.message === "invalid_email")}
-							helperText={
-								Boolean(error?.response?.data?.message === "invalid_email") &&
-								"Enter a valid e-mail address"
-							}
+						<TextField fullWidth label={"Email"} value={email} type={"email"} autoComplete={"email"}
+						           onChange={(e) => setEmail(e.target.value)}
+						           error={Boolean(error?.response?.data?.message === "invalid_email")}
+						           helperText={
+							           Boolean(error?.response?.data?.message === "invalid_email") &&
+							           "Enter a valid e-mail address"
+						           }
 						/>
-						<TextField
-							fullWidth
-							label={"Password"}
-							value={password}
-							onChange={(e) => setPassword(e.target.value)}
-							type={"password"}
-							autoComplete={"new-password"}
-							error={notTheSame || Boolean(error?.response?.data?.message === "invalid_password")}
-							helperText={
-								Boolean(error?.response?.data?.message === "invalid_password") &&
-								"Enter a valid password"
-							}
+						<TextField fullWidth label={"Password"} value={password} type={"password"}
+						           autoComplete={"new-password"}
+						           onChange={(e) => setPassword(e.target.value)}
+						           error={notTheSame || Boolean(error?.response?.data?.message === "invalid_password")}
+						           helperText={
+							           Boolean(error?.response?.data?.message === "invalid_password") &&
+							           "Enter a valid password"
+						           }
 						/>
 						<Typography variant={"caption"} sx={{ pl: 1 }}>
 							Password must contain at least 1 lowercase letter, 1 uppercase letter and 1 number. Password
 							must also be at least 8 characters long
 						</Typography>
-						<TextField
-							fullWidth
-							label={"Confirm password"}
-							value={password2}
-							onChange={(e) => setPassword2(e.target.value)}
-							type={"password"}
-							autoComplete={"new-password"}
-							error={notTheSame}
-							helperText={notTheSame && "Passwords do not match"}
+						<TextField fullWidth label={"Confirm password"} value={password2} type={"password"}
+						           autoComplete={"new-password"}
+						           onChange={(e) => setPassword2(e.target.value)}
+						           error={notTheSame} helperText={notTheSame && "Passwords do not match"}
 						/>
 						<Button type={"submit"} disabled={loading}>
 							Create account
