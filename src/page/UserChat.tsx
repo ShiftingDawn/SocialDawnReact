@@ -1,14 +1,14 @@
 import { useParams } from "react-router";
 import { axios, useApi } from "@lib/axios.ts";
 import * as React from "react";
-import { FormEvent, useEffect, useState } from "react";
-import { Box, IconButton, TextField, Typography } from "@mui/material";
+import { FormEvent, useEffect, useRef, useState } from "react";
+import { Box, Fab, IconButton, TextField, Typography, Zoom } from "@mui/material";
 import { Spinner } from "$/Spinner.tsx";
 import { DmDTO } from "#/DmDTO";
 import { DmMessageDTO } from "#/DmMessageDTO.ts";
 import { Time } from "$/Time.tsx";
 import { useSocket } from "@lib/socket.ts";
-import { Add as AddIcon, EmojiEmotions as EmojiIcon, Send as SendIcon } from "@mui/icons-material";
+import { Add as AddIcon, ArrowDownward, EmojiEmotions as EmojiIcon, Send as SendIcon } from "@mui/icons-material";
 
 function UserChatPage() {
 	const { userId } = useParams();
@@ -19,23 +19,22 @@ function UserChatPage() {
 		const s = socket;
 		const dmId = data?.dmId;
 		if (s && dmId) {
-			s.emit("dm_connect", {dm: dmId});
+			s.emit("dm_connect", { dm: dmId });
 			return () => {
-				s.emit("dm_disconnect", {dm: dmId});
-			}
+				s.emit("dm_disconnect", { dm: dmId });
+			};
 		}
 	}, [socket, data]);
 
 	return (
-		<Box
-			sx={{
-				display: "flex",
-				flexDirection: "column",
-				justifyContent: "stretch",
-				height: "100%",
-				maxHeight: "100%",
-				overflow: "hidden",
-			}}>
+		<Box sx={{
+			display: "flex",
+			flexDirection: "column",
+			justifyContent: "stretch",
+			height: "100%",
+			maxHeight: "100%",
+			overflow: "hidden",
+		}}>
 			{!data ? (
 				<Spinner />
 			) : (
@@ -99,6 +98,8 @@ function Chatbar({ dm }: { dm: string }) {
 
 function MessageList({ dm }: { dm: string }) {
 	const [messages, setMessages] = useState<DmMessageDTO[]>([]);
+	const [scrollAtBottom, setScrollAtBottom] = useState(true);
+	const containerRef = useRef<HTMLOListElement | null>(null);
 	const socket = useSocket();
 
 	function addMessages(messages: DmMessageDTO[], prepend: boolean = false) {
@@ -120,6 +121,17 @@ function MessageList({ dm }: { dm: string }) {
 		const scrollY = Math.ceil(-list.scrollTop + list.clientHeight);
 		if (scrollY >= list.scrollHeight * 0.85) {
 			fetchMessages();
+		}
+		if (scrollAtBottom && list.scrollTop !== 0) {
+			setScrollAtBottom(false);
+		} else if (!scrollAtBottom && list.scrollTop === 0) {
+			setScrollAtBottom(true);
+		}
+	}
+
+	function scrollChatToBottom() {
+		if (containerRef.current) {
+			containerRef.current.scrollTo({ top: 0, behavior: "smooth" });
 		}
 	}
 
@@ -145,20 +157,23 @@ function MessageList({ dm }: { dm: string }) {
 	}, [socket]);
 
 	return (
-		<Box
-			sx={{
-				flex: "1 0",
-				height: "100%",
-				maxHeight: "100%",
-				overflow: "auto",
-				display: "flex",
-				flexDirection: "column-reverse",
-				gap: 2,
-			}}
-			onScroll={handleScroll}
-			component={"ol"}
-			role={"list"}>
+		<Box ref={containerRef} sx={{
+			flex: "1 0",
+			height: "100%",
+			maxHeight: "100%",
+			overflow: "auto",
+			display: "flex",
+			flexDirection: "column-reverse",
+			gap: 2,
+			px: 2,
+		}} onScroll={handleScroll} component={"ol"} role={"list"}>
 			{!messages ? <Spinner /> : messages.map((msg) => <Message key={msg.messageId} msg={msg} />)}
+			<Zoom unmountOnExit in={!scrollAtBottom}>
+				<Fab color={"secondary"} sx={{ position: "absolute", right: 32 }} onClick={scrollChatToBottom}
+				     aria-label={"scroll chat to present"}>
+					<ArrowDownward />
+				</Fab>
+			</Zoom>
 		</Box>
 	);
 }

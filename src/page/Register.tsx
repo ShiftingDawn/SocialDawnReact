@@ -4,7 +4,7 @@ import { useNavigate } from "react-router";
 import { useApi } from "@lib/axios.ts";
 import { RegisterDTO } from "#/RegisterDTO";
 import { PageTitle } from "$/Text.tsx";
-import { fErr } from "@lib/flash.ts";
+import { fErr, fSuccess } from "@lib/flash.ts";
 
 function RegisterPage() {
 	const [{ loading, error }, request] = useApi<undefined, RegisterDTO>(
@@ -34,9 +34,10 @@ function RegisterPage() {
 				email: email,
 				password: password,
 			},
-		})
-			.then(() => navigate("/login"))
-			.catch(() => fErr("Could not register new account."));
+		}).then(() => {
+			fSuccess("Account created successfully");
+			navigate("/login");
+		}).catch(() => fErr("Could not register new account"));
 	};
 
 	return (

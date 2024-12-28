@@ -4,7 +4,7 @@ import { Link, useNavigate } from "react-router";
 import { LoginRequestDTO, LoginResponseDTO } from "#/LoginDTO";
 import { useAuth } from "@sys/User.tsx";
 import { axios } from "@lib/axios.ts";
-import { fErr } from "@lib/flash.ts";
+import { fErr, fSuccess } from "@lib/flash.ts";
 
 function LoginPage() {
 	const [email, setEmail] = useState("");
@@ -19,6 +19,7 @@ function LoginPage() {
 			email: email,
 			password: password,
 		} satisfies LoginRequestDTO).then((res) => {
+			fSuccess("Welcome back!");
 			signIn(res.data.accessToken);
 			navigate("/");
 		}).catch(() => fErr("Could not sign in"));

@@ -45,7 +45,8 @@ function UserWrapper({ children }: PropsWithChildren) {
 	function handleSignOut() {
 		axios.post("/auth/destroy").then(() => {
 			setData({ token: null, loading: false });
-		});
+			window.location.assign("/");
+		}).catch(() => fErr("Could not sign out"));
 	}
 
 	useEffect(() => {
@@ -63,7 +64,7 @@ function UserWrapper({ children }: PropsWithChildren) {
 			failedRequest.response.config.headers["Authorization"] = `Bearer ${token}`;
 			return await Promise.resolve();
 		}, {
-			shouldRefresh: (error) => error.config?.url !== "/auth/refresh",
+			shouldRefresh: (error) => error.status === 401 && error.config?.url !== "/auth/refresh",
 		});
 	}, [fetchToken]);
 
