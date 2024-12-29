@@ -4,4 +4,5 @@ export interface DmMessageDTO {
 	responseTo: DmMessageDTO | null;
 	sendAt: number;
 	message: string;
+
 }

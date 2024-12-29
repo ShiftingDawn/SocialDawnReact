@@ -1,6 +1,5 @@
 import { useParams } from "react-router";
 import { axios, useApi } from "@lib/axios.ts";
-import * as React from "react";
 import { FormEvent, useEffect, useRef, useState } from "react";
 import { Box, Fab, IconButton, TextField, Typography, Zoom } from "@mui/material";
 import { Spinner } from "$/Spinner.tsx";
@@ -9,6 +8,9 @@ import { DmMessageDTO } from "#/DmMessageDTO.ts";
 import { Time } from "$/Time.tsx";
 import { useSocket } from "@lib/socket.ts";
 import { Add as AddIcon, ArrowDownward, EmojiEmotions as EmojiIcon, Send as SendIcon } from "@mui/icons-material";
+import { Emoji, EmojiPicker } from "$/EmojiPicker.tsx";
+import { RenderedText } from "$/RenderedText.tsx";
+
 
 function UserChatPage() {
 	const { dmId } = useParams();
@@ -51,7 +53,9 @@ export default UserChatPage;
 
 function Chatbar({ dm }: { dm: string }) {
 	const socket = useSocket();
-	const [text, setText] = React.useState<string>("");
+	const textFieldRef = useRef<HTMLInputElement | null>(null);
+	const [text, setText] = useState<string>("");
+	const [emojiPickerAnchor, setEmojiPickerAnchor] = useState<HTMLButtonElement | null>(null);
 
 	function handleSubmit(e: FormEvent) {
 		e.preventDefault();
@@ -59,6 +63,18 @@ function Chatbar({ dm }: { dm: string }) {
 			return;
 		}
 		socket.emit("dm_msg", { dm, msg: text }, () => setText(""));
+	}
+
+	function handleEmojiPicked(emoji: Emoji | null) {
+		if (emoji && textFieldRef.current) {
+			const selStart = textFieldRef.current.selectionStart ?? 0;
+			const selEnd = textFieldRef.current.selectionEnd ?? 0;
+			const textBefore = textFieldRef.current.value.substring(0, selStart);
+			const textAfter = textFieldRef.current.value.substring(selEnd);
+			const newText = textBefore + emoji.shortcodes + textAfter;
+			setText(newText);
+		}
+		setEmojiPickerAnchor(null);
 	}
 
 	return (
@@ -73,14 +89,17 @@ function Chatbar({ dm }: { dm: string }) {
 					(theme) => theme.applyStyles("dark", { backgroundColor: "grey.800" }),
 				]}>
 					<IconButton><AddIcon /></IconButton>
-					<IconButton><EmojiIcon /></IconButton>
+					<IconButton aria-label={"open emoji picker"} onClick={(e) => setEmojiPickerAnchor(e.currentTarget)}>
+						<EmojiIcon />
+					</IconButton>
+					<EmojiPicker anchorEl={emojiPickerAnchor} onClose={handleEmojiPicked} />
 				</Box>
 				<Box sx={[
 					{ flex: "1 0", backgroundColor: "grey.200", borderRadius: "20px", overflow: "hidden" },
 					(theme) => theme.applyStyles("dark", { backgroundColor: "grey.800" }),
 				]}>
 					<TextField fullWidth variant={"filled"} size={"small"} hiddenLabel
-					           sx={{ background: "transparent" }}
+					           sx={{ background: "transparent" }} inputRef={textFieldRef}
 					           value={text} onChange={e => setText(e.currentTarget.value)} />
 				</Box>
 				<Box sx={[
@@ -179,14 +198,21 @@ function MessageList({ dm }: { dm: string }) {
 
 function Message({ msg }: { msg: DmMessageDTO }) {
 	return (
-		<Box key={msg.messageId} sx={{ display: "flex", flexDirection: "column" }} component={"li"}>
-			<Typography variant={"body2"} component={"h3"} sx={{ display: "flex", gap: 1 }}>
-				<strong>{msg.username}</strong>
-				<Time value={msg.sendAt} />
-			</Typography>
-			<Typography variant={"body1"} sx={{ ml: 1 }} component={"div"}>
-				{msg.message}
-			</Typography>
+		<Box key={msg.messageId} sx={{ display: "flex", flexDirection: "row" }} component={"li"}>
+			<Box>
+			{/*	TODO user avatar here */}
+			</Box>
+			<Box sx={{display: "flex", flexDirection: "column"}}>
+				<Typography variant={"body2"} component={"h3"} sx={{ display: "flex", gap: 1 }}>
+					<strong>{msg.username}</strong>
+					<Time value={msg.sendAt} />
+				</Typography>
+				<Typography variant={"body1"} sx={{ ml: 1 }} component={"div"}>
+					<RenderedText>
+						{msg.message}
+					</RenderedText>
+				</Typography>
+			</Box>
 		</Box>
 	);
 }
