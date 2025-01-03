@@ -1,14 +1,18 @@
 import { createElement } from "react";
 import { AlertColor } from "@mui/material";
 import { toast } from "sonner";
-import { FlashMessage } from "@sys/FlashMessage.tsx";
+import { FlashMessage } from "$/FlashMessage.tsx";
 
 export function flash(message: string, type: AlertColor) {
-	toast.custom(t => createElement(FlashMessage, {
-		toastId: t,
-		type,
-		message,
-	}), { id: message });
+	toast.custom(
+		(t) =>
+			createElement(FlashMessage, {
+				toastId: t,
+				type,
+				message,
+			}),
+		{ id: message },
+	);
 }
 
 export function fInfo(message: string) {

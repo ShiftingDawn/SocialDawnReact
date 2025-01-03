@@ -5,5 +5,22 @@
 	"useTabs": true,
 	"tabWidth": 4,
 	"endOfLine": "lf",
-	"editorconfig": true
+	"arrowParens": "always",
+	"plugins": ["@trivago/prettier-plugin-sort-imports"],
+	"importOrder": [
+		"^react$",
+		"^react-dom(.*)$",
+		"^react-router(.*)$",
+		"^@mui/material(.*)$",
+		"^@mui/icons-material(.*)$",
+		"<THIRD_PARTY_MODULES>",
+		"^@sys/(.*)$",
+		"^@lib/(.*)$",
+		"^@page/(.*)$",
+		"^\\$/(.*)$",
+		"^#/(.*)$",
+		"^[./]"
+	],
+	"importOrderSeparation": false,
+	"importOrderSortSpecifiers": true
 }

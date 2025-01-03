@@ -1,16 +1,16 @@
-import { useParams } from "react-router";
-import { axios, useApi } from "@lib/axios.ts";
 import { FormEvent, useEffect, useRef, useState } from "react";
+import { useParams } from "react-router";
 import { Box, Fab, IconButton, TextField, Typography, Zoom } from "@mui/material";
-import { Spinner } from "$/Spinner.tsx";
-import { DmDTO } from "#/DmDTO";
-import { DmMessageDTO } from "#/DmMessageDTO.ts";
-import { Time } from "$/Time.tsx";
-import { useSocket } from "@lib/socket.ts";
 import { Add as AddIcon, ArrowDownward, EmojiEmotions as EmojiIcon, Send as SendIcon } from "@mui/icons-material";
+import Axios from "axios";
+import { useApi } from "@lib/api.ts";
+import { useSocket } from "@lib/socket.context.ts";
 import { Emoji, EmojiPicker } from "$/EmojiPicker.tsx";
 import { RenderedText } from "$/RenderedText.tsx";
-
+import { Spinner } from "$/Spinner.tsx";
+import { Time } from "$/Time.tsx";
+import { DmDTO } from "#/DmDTO";
+import { DmMessageDTO } from "#/DmMessageDTO.ts";
 
 function UserChatPage() {
 	const { dmId } = useParams();
@@ -29,14 +29,16 @@ function UserChatPage() {
 	}, [socket, data]);
 
 	return (
-		<Box sx={{
-			display: "flex",
-			flexDirection: "column",
-			justifyContent: "stretch",
-			height: "100%",
-			maxHeight: "100%",
-			overflow: "hidden",
-		}}>
+		<Box
+			sx={{
+				display: "flex",
+				flexDirection: "column",
+				justifyContent: "stretch",
+				height: "100%",
+				maxHeight: "100%",
+				overflow: "hidden",
+			}}
+		>
 			{!data ? (
 				<Spinner />
 			) : (
@@ -79,33 +81,50 @@ function Chatbar({ dm }: { dm: string }) {
 
 	return (
 		<form onSubmit={handleSubmit}>
-			<Box sx={{
-				display: "flex",
-				gap: 1,
-				p: 1,
-			}}>
-				<Box sx={[
-					{ flex: "0 0", backgroundColor: "grey.200", display: "flex", borderRadius: "20px" },
-					(theme) => theme.applyStyles("dark", { backgroundColor: "grey.800" }),
-				]}>
-					<IconButton><AddIcon /></IconButton>
+			<Box
+				sx={{
+					display: "flex",
+					gap: 1,
+					p: 1,
+				}}
+			>
+				<Box
+					sx={[
+						{ flex: "0 0", backgroundColor: "grey.200", display: "flex", borderRadius: "20px" },
+						(theme) => theme.applyStyles("dark", { backgroundColor: "grey.800" }),
+					]}
+				>
+					<IconButton>
+						<AddIcon />
+					</IconButton>
 					<IconButton aria-label={"open emoji picker"} onClick={(e) => setEmojiPickerAnchor(e.currentTarget)}>
 						<EmojiIcon />
 					</IconButton>
 					<EmojiPicker anchorEl={emojiPickerAnchor} onClose={handleEmojiPicked} />
 				</Box>
-				<Box sx={[
-					{ flex: "1 0", backgroundColor: "grey.200", borderRadius: "20px", overflow: "hidden" },
-					(theme) => theme.applyStyles("dark", { backgroundColor: "grey.800" }),
-				]}>
-					<TextField fullWidth variant={"filled"} size={"small"} hiddenLabel
-					           sx={{ background: "transparent" }} inputRef={textFieldRef}
-					           value={text} onChange={e => setText(e.currentTarget.value)} />
+				<Box
+					sx={[
+						{ flex: "1 0", backgroundColor: "grey.200", borderRadius: "20px", overflow: "hidden" },
+						(theme) => theme.applyStyles("dark", { backgroundColor: "grey.800" }),
+					]}
+				>
+					<TextField
+						fullWidth
+						variant={"filled"}
+						size={"small"}
+						hiddenLabel
+						sx={{ background: "transparent" }}
+						inputRef={textFieldRef}
+						value={text}
+						onChange={(e) => setText(e.currentTarget.value)}
+					/>
 				</Box>
-				<Box sx={[
-					{ flex: "0 0", backgroundColor: "grey.200", borderRadius: "20px" },
-					(theme) => theme.applyStyles("dark", { backgroundColor: "grey.800" }),
-				]}>
+				<Box
+					sx={[
+						{ flex: "0 0", backgroundColor: "grey.200", borderRadius: "20px" },
+						(theme) => theme.applyStyles("dark", { backgroundColor: "grey.800" }),
+					]}
+				>
 					<IconButton type={"submit"} aria-label={"send message"}>
 						<SendIcon />
 					</IconButton>
@@ -123,15 +142,15 @@ function MessageList({ dm }: { dm: string }) {
 
 	function addMessages(messages: DmMessageDTO[], prepend: boolean = false) {
 		if (prepend) {
-			setMessages(current => ([
-				...messages.filter(msg => !current.find((v) => v.messageId === msg.messageId)),
+			setMessages((current) => [
+				...messages.filter((msg) => !current.find((v) => v.messageId === msg.messageId)),
 				...current,
-			]));
+			]);
 		} else {
-			setMessages(current => ([
+			setMessages((current) => [
 				...current,
-				...messages.filter(msg => !current.find((v) => v.messageId === msg.messageId)),
-			]));
+				...messages.filter((msg) => !current.find((v) => v.messageId === msg.messageId)),
+			]);
 		}
 	}
 
@@ -155,8 +174,9 @@ function MessageList({ dm }: { dm: string }) {
 	}
 
 	function fetchMessages() {
-		axios.get(`/dm/message/${dm}?take=50${messages.length === 0 ? "" : `&last=${messages[messages.length - 1].messageId}`}`)
-			.then((res) => addMessages(res.data));
+		Axios.get(
+			`/dm/message/${dm}?take=50${messages.length === 0 ? "" : `&last=${messages[messages.length - 1].messageId}`}`,
+		).then((res) => addMessages(res.data));
 	}
 
 	function handleSocketMessage(msg: DmMessageDTO) {
@@ -176,19 +196,36 @@ function MessageList({ dm }: { dm: string }) {
 	}, [socket]);
 
 	return (
-		<Box ref={containerRef} sx={{
-			flex: "1 0", height: "100%", maxHeight: "100%",
-			overflow: "auto",
-			display: "flex", flexDirection: "column-reverse",
-			gap: 2, px: 2, pt: 2, m: 0,
-		}} onScroll={handleScroll} component={"ol"} role={"list"}>
+		<Box
+			ref={containerRef}
+			sx={{
+				flex: "1 0",
+				height: "100%",
+				maxHeight: "100%",
+				overflow: "auto",
+				display: "flex",
+				flexDirection: "column-reverse",
+				gap: 2,
+				px: 2,
+				pt: 2,
+				m: 0,
+			}}
+			onScroll={handleScroll}
+			component={"ol"}
+			role={"list"}
+		>
 			{!messages ? <Spinner /> : messages.map((msg) => <Message key={msg.messageId} msg={msg} />)}
 			<Zoom unmountOnExit in={!scrollAtBottom}>
-				<Fab color={"secondary"} sx={{
-					position: "absolute",
-					right: { xs: "50%", sm: "24px" },
-					translate: { xs: "50%", sm: "unset" },
-				}} onClick={scrollChatToBottom} aria-label={"scroll chat to present"}>
+				<Fab
+					color={"secondary"}
+					sx={{
+						position: "absolute",
+						right: { xs: "50%", sm: "24px" },
+						translate: { xs: "50%", sm: "unset" },
+					}}
+					onClick={scrollChatToBottom}
+					aria-label={"scroll chat to present"}
+				>
 					<ArrowDownward />
 				</Fab>
 			</Zoom>
@@ -199,18 +236,14 @@ function MessageList({ dm }: { dm: string }) {
 function Message({ msg }: { msg: DmMessageDTO }) {
 	return (
 		<Box key={msg.messageId} sx={{ display: "flex", flexDirection: "row" }} component={"li"}>
-			<Box>
-			{/*	TODO user avatar here */}
-			</Box>
-			<Box sx={{display: "flex", flexDirection: "column"}}>
+			<Box>{/*	TODO user avatar here */}</Box>
+			<Box sx={{ display: "flex", flexDirection: "column" }}>
 				<Typography variant={"body2"} component={"h3"} sx={{ display: "flex", gap: 1 }}>
 					<strong>{msg.username}</strong>
 					<Time value={msg.sendAt} />
 				</Typography>
 				<Typography variant={"body1"} sx={{ ml: 1 }} component={"div"}>
-					<RenderedText>
-						{msg.message}
-					</RenderedText>
+					<RenderedText>{msg.message}</RenderedText>
 				</Typography>
 			</Box>
 		</Box>

@@ -1,22 +1,29 @@
-import { StrictMode } from "react";
+import { ReactNode, StrictMode } from "react";
 import { createRoot } from "react-dom/client";
+import { BrowserRouter } from "react-router";
 import { CssBaseline, ThemeProvider } from "@mui/material";
-import App from "@sys/App.tsx";
-import theme from "@lib/theme.ts";
-import UserWrapper from "@sys/User.tsx";
 import { Toaster as FlashContainer } from "sonner";
-import SocketHandler from "@sys/SocketHandler.tsx";
+import Layout from "@sys/layout.tsx";
+import SessionProvider from "@sys/session.provider.tsx";
+import SocketHandler from "@sys/socket.provider.tsx";
+import theme from "@lib/theme.ts";
 
-createRoot(document.getElementById("root")!).render(
-	<StrictMode>
-		<ThemeProvider theme={theme}>
-			<CssBaseline enableColorScheme />
-			<FlashContainer position={"bottom-center"}  />
-			<UserWrapper>
-				<SocketHandler>
-					<App />
-				</SocketHandler>
-			</UserWrapper>
-		</ThemeProvider>
-	</StrictMode>,
-);
+function render(): ReactNode {
+	return (
+		<StrictMode>
+			<ThemeProvider theme={theme}>
+				<CssBaseline enableColorScheme />
+				<FlashContainer position={"bottom-center"} />
+				<SessionProvider>
+					<SocketHandler>
+						<BrowserRouter>
+							<Layout />
+						</BrowserRouter>
+					</SocketHandler>
+				</SessionProvider>
+			</ThemeProvider>
+		</StrictMode>
+	);
+}
+
+createRoot(document.getElementById("root")!).render(render());

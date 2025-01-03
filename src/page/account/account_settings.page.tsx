@@ -1,17 +1,17 @@
 import { Box, Button, Card, CardActions, CardContent, Container } from "@mui/material";
 import { PageTitle } from "$/Text.tsx";
-import { useUser } from "@sys/User.tsx";
 import { Link } from "react-router";
+import { useSession } from "@lib/session.context.ts";
 
 function PageAccountSettings() {
-	const user = useUser();
+	const { session } = useSession();
 	return (
 		<Container maxWidth={"sm"} sx={{ pt: 3 }}>
 			<PageTitle>Account Settings</PageTitle>
 			<Box sx={{ p: 2, display: "flex", flexDirection: "column", gap: 2 }} component={"main"}>
 				<Card>
 					<CardContent>
-						{user.email}
+						{session?.email}
 					</CardContent>
 					<CardActions>
 						<Button component={Link} to={"/account/changepassword"}>

@@ -25,7 +25,9 @@
 			"@lib/*": ["./src/lib/*"],
 			"@page/*": ["./src/page/*"],
 			"$/*": ["./src/components/*"]
-		}
+		},
+		"typeRoots": ["./types/**/*"]
 	},
-	"include": ["src"]
+	"include": ["src", "types/**/*.ts"],
+	"exclude": ["node_modules"]
 }
