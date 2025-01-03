@@ -1,4 +1,4 @@
-import { createElement, HTMLAttributes, ReactNode, useEffect, useState } from "react";
+import { HTMLAttributes, ReactNode, createElement, useEffect, useState } from "react";
 import { SearchIndex } from "emoji-mart";
 
 interface RenderedTextProps extends Omit<HTMLAttributes<HTMLSpanElement>, "children"> {
@@ -16,12 +16,13 @@ export function RenderedText({ children }: RenderedTextProps) {
 				const matches = newString.matchAll(/:[^:\s]*(?:::[^:\s]*)*:/gm);
 				const nextMatch = matches.next();
 				if (nextMatch.done) {
+					nodes.push(newString);
 					break;
 				}
 				const match = nextMatch.value;
 				const id = match[0].substring(1, match[0].length - 1);
 				const emojis: any[] = await SearchIndex.search(id);
-				const emojiMatch = emojis.find(emoji => emoji.id === id);
+				const emojiMatch = emojis.find((emoji) => emoji.id === id);
 				const shortCode = `:${id}:`;
 				if (emojiMatch) {
 					nodes.push(
@@ -29,7 +30,7 @@ export function RenderedText({ children }: RenderedTextProps) {
 						createElement("em-emoji", { shortcodes: shortCode }),
 					);
 				} else {
-					nodes.push(newString.substring(0, match.index + shortCode.length))
+					nodes.push(newString.substring(0, match.index + shortCode.length));
 				}
 				newString = newString.substring(match.index + shortCode.length);
 			}
@@ -43,9 +44,7 @@ export function RenderedText({ children }: RenderedTextProps) {
 	return (
 		<span>
 			{textToRender.map((item, index) => (
-				<span key={index}>
-					{item}
-				</span>
+				<span key={index}>{item}</span>
 			))}
 		</span>
 	);
