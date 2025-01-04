@@ -50,8 +50,11 @@ export default function ({ children }: PC) {
 						await realFetch();
 						break;
 					case "signout":
+					case "destroy":
 						if (InternalSessionStore.session !== null) {
-							await Axios.post("/auth/destroy");
+							if (reason === "signout") {
+								await Axios.post("/auth/destroy");
+							}
 							setSession(null);
 							InternalSessionStore.session = null;
 							InternalSessionStore.lastUpdate = Math.floor(Date.now() / 1000);

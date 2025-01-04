@@ -8,7 +8,7 @@ declare type SessionContextValue =
 	| { state: "loading" | "unauthenticated"; session: null; update: SessionFetchFunction }
 	| { state: "authenticated"; session: ClientSession; update: SessionFetchFunction };
 
-declare type SessionFetchReason = "timer" | "signin" | "signout" | "force";
+declare type SessionFetchReason = "timer" | "signin" | "signout" | "force" | "destroy";
 
 declare type SessionFetchFunction = (reason: SessionFetchReason) => Promise<void>;
 
