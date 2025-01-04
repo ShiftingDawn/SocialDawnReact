@@ -5,7 +5,7 @@ import Axios from "axios";
 import { fErr, fSuccess } from "@lib/flash.ts";
 import { useSession } from "@lib/session.context.ts";
 import { PageTitle } from "$/Text.tsx";
-import { LoginRequestDTO, LoginResponseDTO } from "#/LoginDTO";
+import { LoginRequestDTO, LoginResponseDTO } from "#/dto.ts";
 
 function LoginPage() {
 	const [email, setEmail] = useState("");

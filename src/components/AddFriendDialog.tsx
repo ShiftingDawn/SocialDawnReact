@@ -1,9 +1,9 @@
 import { useState } from "react";
 import { Alert, Button, Dialog, DialogActions, DialogContent, DialogTitle, TextField } from "@mui/material";
-import { useApi } from "@lib/api.ts";
+import useAxios from "axios-hooks";
 import { post } from "@lib/event.ts";
 import { Caption } from "$/Text.tsx";
-import { AddFriendDTO } from "#/AddFriendDTO";
+import { AddFriendRequestDTO } from "#/dto.ts";
 
 interface AddFriendDialogProps {
 	open: boolean;
@@ -12,11 +12,8 @@ interface AddFriendDialogProps {
 
 export function AddFriendDialog({ open, setOpen }: AddFriendDialogProps) {
 	const [username, setUsername] = useState<string>("");
-	const [{ loading, error }, request] = useApi<unknown, AddFriendDTO>(
-		{
-			url: "/friend",
-			method: "post",
-		},
+	const [{ loading, error }, request] = useAxios<unknown, AddFriendRequestDTO, ErrorResponse>(
+		{ url: "/friend", method: "post" },
 		{ manual: true },
 	);
 

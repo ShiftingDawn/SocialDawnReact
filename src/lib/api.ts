@@ -1,7 +1,6 @@
 import { ApolloClient, InMemoryCache } from "@apollo/client";
-import Axios, { AxiosRequestConfig } from "axios";
-import useAxios, { Options, configure } from "axios-hooks";
-import { ErrorResponse } from "#/ErrorResponse";
+import Axios from "axios";
+import { configure } from "axios-hooks";
 
 export function getApiBaseUrl(): string {
 	const metaApiUrlElement = document.querySelector("meta[name='api_url']");
@@ -25,14 +24,3 @@ export const apollo = new ApolloClient({
 	cache: new InMemoryCache(),
 	credentials: "include",
 });
-
-//TODO remove
-/**
- * @deprecated
- */
-export function useApi<TResponse = any, TBody = any, TError = ErrorResponse>(
-	config: AxiosRequestConfig<TBody> | string,
-	option?: Options,
-) {
-	return useAxios<TResponse, TBody, TError>(config, option);
-}

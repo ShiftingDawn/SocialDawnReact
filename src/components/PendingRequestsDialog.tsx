@@ -13,43 +13,37 @@ import {
 } from "@mui/material";
 import { Check as CheckIcon, Close as CloseIcon, ExpandMore as ExpandMoreIcon } from "@mui/icons-material";
 import Axios from "axios";
-import { useApi } from "@lib/api.ts";
-import { post, useEvent } from "@lib/event.ts";
+import { post } from "@lib/event.ts";
 import { fSuccess } from "@lib/flash.ts";
-import { Spinner } from "$/Spinner.tsx";
-import { FriendRequestCountDTO, FriendRequestResponseDTO } from "#/FriendRequestDTO";
+import { FriendRequestDTO, FriendRequestListDTO } from "#/schema.ts";
 
 interface PendingRequestsDialogProps {
 	open: boolean;
 	setOpen: (open: boolean) => void;
-	count: FriendRequestCountDTO;
+	requests: FriendRequestListDTO;
 }
 
-export function PendingRequestsDialog({ open, setOpen, count }: PendingRequestsDialogProps) {
+export function PendingRequestsDialog({ open, setOpen, requests }: PendingRequestsDialogProps) {
 	useEffect(() => {
-		if (count.sent === 0 && count.received === 0) {
+		if (requests.sent.length === 0 && requests.received.length === 0) {
 			setOpen(false);
 		}
-	}, [count.sent, count.received]);
+	}, [requests.sent.length, requests.received.length]);
 
 	return (
 		<Dialog open={open} fullWidth maxWidth={"xs"} onClose={() => setOpen(false)}>
 			<DialogTitle>Pending requests</DialogTitle>
 			<DialogContent>
 				<Accordion defaultExpanded>
-					<AccordionSummary expandIcon={<ExpandMoreIcon />} disabled={count.received === 0}>
-						Received friend requests
-					</AccordionSummary>
+					<AccordionSummary expandIcon={<ExpandMoreIcon />}>Received friend requests</AccordionSummary>
 					<AccordionDetails>
-						<FriendRequestList type={"received"} />
+						<FriendRequestList type={"received"} data={requests.received} />
 					</AccordionDetails>
 				</Accordion>
 				<Accordion defaultExpanded>
-					<AccordionSummary expandIcon={<ExpandMoreIcon />} disabled={count.sent === 0}>
-						Sent friend requests
-					</AccordionSummary>
+					<AccordionSummary expandIcon={<ExpandMoreIcon />}>Sent friend requests</AccordionSummary>
 					<AccordionDetails>
-						<FriendRequestList type={"sent"} />
+						<FriendRequestList type={"sent"} data={requests.sent} />
 					</AccordionDetails>
 				</Accordion>
 			</DialogContent>
@@ -57,72 +51,57 @@ export function PendingRequestsDialog({ open, setOpen, count }: PendingRequestsD
 	);
 }
 
-function FriendRequestList({ type }: { type: "sent" | "received" }) {
-	const [{ data, loading }, refetch] = useApi<FriendRequestResponseDTO[]>("/friend/request/" + type);
-
-	useEvent("friend_request_update", () => refetch());
-
+function FriendRequestList({ type, data }: { data: FriendRequestDTO[]; type: "sent" | "received" }) {
 	function handleDelete(id: string) {
-		Axios.delete(`/friend/request/${type}/${id}`).then(() => {
-			refetch().then(() => {
-				post("friend_request_update");
-				fSuccess("Friend request deleted successfully.");
-			});
+		Axios.delete(`/friend/request/${id}`).then(() => {
+			post("friend_request_update");
+			fSuccess("Friend request deleted");
 		});
 	}
 
 	function handleAccept(id: string) {
 		if (type !== "received") return;
-		Axios.post(`/friend/request/received/${id}`).then(() => {
-			refetch().then(() => {
-				post("friend_request_update");
-				fSuccess("Friend request accepted.");
-			});
+		Axios.post(`/friend/request/${id}`).then(() => {
+			post("friend_request_update");
+			fSuccess("Friend request accepted");
 		});
 	}
 
 	return (
 		<Stack spacing={2}>
-			{loading ? (
-				<Box display={"flex"} gap={1} alignItems={"center"}>
-					<Spinner />
-					<span>Loading</span>
-				</Box>
-			) : (
-				data?.map((item) => (
-					<Box key={item.id} p={1} display={"flex"} justifyContent={"space-between"}>
-						<Box>
-							<Typography variant={"body1"} component={"h3"}>
-								{item.username}
-							</Typography>
-							<Typography variant={"body2"} component={"span"}>
-								Sent at{" "}
-								<time dateTime={new Date(item.sentAt).toISOString()}>
-									{new Date(item.sentAt).toLocaleDateString()}
-								</time>
-							</Typography>
-						</Box>
-						<Box display={"flex"} alignItems={"center"}>
-							{type === "received" && (
-								<IconButton
-									color={"success"}
-									aria-label={"accept friend request"}
-									onClick={() => handleAccept(item.id)}
-								>
-									<CheckIcon />
-								</IconButton>
-							)}
-							<IconButton
-								color={"error"}
-								aria-label={"delete friend request"}
-								onClick={() => handleDelete(item.id)}
-							>
-								<CloseIcon />
-							</IconButton>
-						</Box>
+			{data.map((item) => (
+				<Box key={item.id} p={1} display={"flex"} justifyContent={"space-between"}>
+					<Box>
+						<Typography variant={"body1"} component={"h3"}>
+							{item.user.username}
+						</Typography>
+						<Typography variant={"body2"} component={"span"}>
+							Sent at{" "}
+							<time dateTime={new Date(item.sentAt).toISOString()}>
+								{new Date(item.sentAt).toLocaleDateString()}
+							</time>
+						</Typography>
 					</Box>
-				))
-			)}
+					<Box display={"flex"} alignItems={"center"}>
+						{type === "received" && (
+							<IconButton
+								color={"success"}
+								aria-label={"accept friend request"}
+								onClick={() => handleAccept(item.id)}
+							>
+								<CheckIcon />
+							</IconButton>
+						)}
+						<IconButton
+							color={"error"}
+							aria-label={"delete friend request"}
+							onClick={() => handleDelete(item.id)}
+						>
+							<CloseIcon />
+						</IconButton>
+					</Box>
+				</Box>
+			))}
 		</Stack>
 	);
 }

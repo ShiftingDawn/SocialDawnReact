@@ -20,7 +20,7 @@
 		"noFallthroughCasesInSwitch": true,
 		"noUncheckedSideEffectImports": true,
 		"paths": {
-			"#/*": ["./dto/*"],
+			"#/*": ["./src/data/*"],
 			"@sys/*": ["./src/system/*"],
 			"@lib/*": ["./src/lib/*"],
 			"@page/*": ["./src/page/*"],

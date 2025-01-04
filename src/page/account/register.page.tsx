@@ -1,17 +1,14 @@
 import { FormEventHandler, useState } from "react";
 import { Link, useNavigate } from "react-router";
 import { Button, Container, Divider, Paper, Stack, TextField, Typography } from "@mui/material";
-import { useApi } from "@lib/api.ts";
+import useAxios from "axios-hooks";
 import { fErr, fSuccess } from "@lib/flash.ts";
 import { PageTitle } from "$/Text.tsx";
-import { RegisterDTO } from "#/RegisterDTO";
+import { RegisterRequestDTO } from "#/dto.ts";
 
 function RegisterPage() {
-	const [{ loading, error }, request] = useApi<undefined, RegisterDTO>(
-		{
-			url: "/user/register",
-			method: "POST",
-		},
+	const [{ loading, error }, request] = useAxios<undefined, RegisterRequestDTO, ErrorResponse>(
+		{ url: "/auth/register", method: "POST" },
 		{ manual: true },
 	);
 	const [username, setUsername] = useState("");
@@ -28,13 +25,7 @@ function RegisterPage() {
 			setNotTheSame(true);
 			return;
 		}
-		request({
-			data: {
-				username: username,
-				email: email,
-				password: password,
-			},
-		})
+		request({ data: { username: username, email: email, password: password } })
 			.then(() => {
 				fSuccess("Account created successfully");
 				navigate("/login");

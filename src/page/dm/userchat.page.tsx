@@ -2,28 +2,29 @@ import { FormEvent, useEffect, useRef, useState } from "react";
 import { useParams } from "react-router";
 import { Box, Fab, IconButton, TextField, Typography, Zoom } from "@mui/material";
 import { Add as AddIcon, ArrowDownward, EmojiEmotions as EmojiIcon, Send as SendIcon } from "@mui/icons-material";
-import Axios from "axios";
-import { useApi } from "@lib/api.ts";
+import { useQuery } from "@apollo/client";
+import { apollo } from "@lib/api.ts";
 import { useSocket } from "@lib/socket.context.ts";
 import { Emoji, EmojiPicker } from "$/EmojiPicker.tsx";
 import { RenderedText } from "$/RenderedText.tsx";
 import { Spinner } from "$/Spinner.tsx";
 import { Time } from "$/Time.tsx";
-import { DmDTO } from "#/DmDTO";
-import { DmMessageDTO } from "#/DmMessageDTO.ts";
+import { QUERY_GET_DM, QUERY_GET_DM_MESSAGES } from "#/queries.ts";
+import { DmDTO, DmMessageDTO } from "#/schema.ts";
 
 function UserChatPage() {
 	const { dmId } = useParams();
-	const [{ data }] = useApi<DmDTO>(`/dm/${dmId}`);
+	const { data } = useQuery<{ dm: DmDTO }>(QUERY_GET_DM, {
+		variables: { dmId },
+	});
 	const socket = useSocket();
 
 	useEffect(() => {
-		const s = socket;
-		const dmId = data?.dmId;
-		if (s && dmId) {
-			s.emit("dm_connect", { dm: dmId });
+		if (!data?.dm?.id) return;
+		if (socket) {
+			socket.emit("dm_connect", { dm: data.dm.id });
 			return () => {
-				s.emit("dm_disconnect", { dm: dmId });
+				socket.emit("dm_disconnect", { dm: data.dm.id });
 			};
 		}
 	}, [socket, data]);
@@ -43,8 +44,8 @@ function UserChatPage() {
 				<Spinner />
 			) : (
 				<>
-					<MessageList dm={data.dmId} />
-					<Chatbar dm={data.dmId} />
+					<MessageList dm={data.dm.id} />
+					<Chatbar dm={data.dm.id} />
 				</>
 			)}
 		</Box>
@@ -142,15 +143,9 @@ function MessageList({ dm }: { dm: string }) {
 
 	function addMessages(messages: DmMessageDTO[], prepend: boolean = false) {
 		if (prepend) {
-			setMessages((current) => [
-				...messages.filter((msg) => !current.find((v) => v.messageId === msg.messageId)),
-				...current,
-			]);
+			setMessages((current) => [...messages.filter((msg) => !current.find((v) => v.id === msg.id)), ...current]);
 		} else {
-			setMessages((current) => [
-				...current,
-				...messages.filter((msg) => !current.find((v) => v.messageId === msg.messageId)),
-			]);
+			setMessages((current) => [...current, ...messages.filter((msg) => !current.find((v) => v.id === msg.id))]);
 		}
 	}
 
@@ -174,9 +169,18 @@ function MessageList({ dm }: { dm: string }) {
 	}
 
 	function fetchMessages() {
-		Axios.get(
-			`/dm/message/${dm}?take=50${messages.length === 0 ? "" : `&last=${messages[messages.length - 1].messageId}`}`,
-		).then((res) => addMessages(res.data));
+		apollo
+			.query<{ dmMessages: DmMessageDTO[] }, { dmId: string; last: string | null; take: number }>({
+				query: QUERY_GET_DM_MESSAGES,
+				variables: {
+					dmId: dm,
+					last: messages.length === 0 ? null : messages[messages.length - 1].id,
+					take: 50,
+				},
+			})
+			.then((data) => {
+				addMessages(data.data.dmMessages);
+			});
 	}
 
 	function handleSocketMessage(msg: DmMessageDTO) {
@@ -214,7 +218,7 @@ function MessageList({ dm }: { dm: string }) {
 			component={"ol"}
 			role={"list"}
 		>
-			{!messages ? <Spinner /> : messages.map((msg) => <Message key={msg.messageId} msg={msg} />)}
+			{!messages ? <Spinner /> : messages.map((msg) => <Message key={msg.id} msg={msg} />)}
 			<Zoom unmountOnExit in={!scrollAtBottom}>
 				<Fab
 					color={"secondary"}
@@ -235,15 +239,15 @@ function MessageList({ dm }: { dm: string }) {
 
 function Message({ msg }: { msg: DmMessageDTO }) {
 	return (
-		<Box key={msg.messageId} sx={{ display: "flex", flexDirection: "row" }} component={"li"}>
+		<Box key={msg.id} sx={{ display: "flex", flexDirection: "row" }} component={"li"}>
 			<Box>{/*	TODO user avatar here */}</Box>
 			<Box sx={{ display: "flex", flexDirection: "column" }}>
 				<Typography variant={"body2"} component={"h3"} sx={{ display: "flex", gap: 1 }}>
-					<strong>{msg.username}</strong>
-					<Time value={msg.sendAt} />
+					<strong>{msg.sender.username}</strong>
+					<Time value={msg.sentAt} />
 				</Typography>
 				<Typography variant={"body1"} sx={{ ml: 1 }} component={"div"}>
-					<RenderedText>{msg.message}</RenderedText>
+					<RenderedText>{msg.content}</RenderedText>
 				</Typography>
 			</Box>
 		</Box>

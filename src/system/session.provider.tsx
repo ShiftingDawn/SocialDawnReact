@@ -5,6 +5,7 @@ import Axios from "axios";
 import { apollo } from "@lib/api.ts";
 import { SessionContext } from "@lib/session.context.ts";
 import { Spinner } from "$/Spinner.tsx";
+import { SelfUserDTO } from "#/schema.ts";
 
 const QUERY = gql`
 	{
@@ -24,7 +25,7 @@ export default function ({ children }: PC) {
 		InternalSessionStore.fetchSession = async (reason) => {
 			async function realFetch() {
 				InternalSessionStore.lastUpdate = Math.floor(Date.now() / 1000);
-				const result = await apollo.query({ query: QUERY });
+				const result = await apollo.query<{ self: SelfUserDTO }>({ query: QUERY });
 				InternalSessionStore.session = {
 					username: result.data.self.username,
 					thumbnail: result.data.self.thumbnail,

@@ -34,18 +34,17 @@ import {
 	SettingsBrightness as SettingsBrightnessIcon,
 	Tag as TagIcon,
 } from "@mui/icons-material";
+import { useQuery } from "@apollo/client";
 import { TabContext, TabList } from "@mui/lab";
-import Axios from "axios";
-import { useApi } from "@lib/api.ts";
+import { apollo } from "@lib/api.ts";
 import { useEvent } from "@lib/event.ts";
 import { fErr } from "@lib/flash.ts";
 import { useSession } from "@lib/session.context.ts";
 import { AddFriendDialog } from "$/AddFriendDialog.tsx";
 import { PendingRequestsDialog } from "$/PendingRequestsDialog.tsx";
 import { Spinner } from "$/Spinner.tsx";
-import { DmDTO } from "#/DmDTO";
-import { FriendDTO } from "#/FriendDTO";
-import { FriendRequestCountDTO } from "#/FriendRequestDTO";
+import { QUERY_GET_DMS, QUERY_GET_FRIENDS, QUERY_GET_FRIEND_REQUESTS, QUERY_MAKE_DM } from "#/queries";
+import { DmDTO, FriendDTO, FriendRequestListDTO } from "#/schema";
 
 export const DRAWER_WIDTH = 300;
 
@@ -271,21 +270,31 @@ function Sidebar() {
 }
 
 function TabDms() {
-	const [{ data }] = useApi<DmDTO[]>("/dm");
+	const { loading, error, data } = useQuery<{ dms: DmDTO[] }>(QUERY_GET_DMS);
 	const navigate = useNavigate();
 
 	function openDm(dmId: string) {
 		navigate(`/dm/${dmId}`);
 	}
 
+	useEffect(() => {
+		if (error) {
+			fErr("Could not retrieve chats");
+		}
+	}, [error]);
+
 	return (
 		<Stack>
-			{data === undefined ? (
+			{loading ? (
 				<Box sx={{ display: "flex", gap: 1, alignItems: "center" }}>
 					<Spinner />
 					<span>Loading</span>
 				</Box>
-			) : data.length === 0 ? (
+			) : !data ? (
+				<Box sx={{ display: "flex", gap: 1, alignItems: "center" }}>
+					<span>An error occurred</span>
+				</Box>
+			) : data.dms.length === 0 ? (
 				<Box
 					sx={{
 						display: "flex",
@@ -301,9 +310,9 @@ function TabDms() {
 					<Typography>It's lonely here</Typography>
 				</Box>
 			) : (
-				data.map((dm) => (
+				data.dms.map((dm) => (
 					<Box
-						key={dm.dmId}
+						key={dm.id}
 						sx={[
 							{
 								p: 1,
@@ -325,12 +334,12 @@ function TabDms() {
 						]}
 						role={"link"}
 						aria-label={"open chat"}
-						onClick={() => openDm(dm.dmId)}
+						onClick={() => openDm(dm.id)}
 					>
 						<Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-							<Avatar aria-hidden={true} src={dm.thumbnail} />
+							<Avatar aria-hidden={true} src={dm.user.thumbnail} />
 							<Typography variant={"body1"} component={"h3"}>
-								{dm.name}
+								{dm.user.username}
 							</Typography>
 						</Box>
 					</Box>
@@ -343,9 +352,17 @@ function TabDms() {
 function TabFriends() {
 	const [addFriendModalOpen, setAddFriendModalOpen] = useState(false);
 	const [requestsModalOpen, setRequestsModalOpen] = useState(false);
-	const [{ data }, refetch] = useApi<FriendDTO[]>(`/friend`);
-	const [{ data: reqCount }, refetchReqCount] = useApi<FriendRequestCountDTO>("/friend/request/count");
+	const { data, loading, error, refetch } = useQuery<{ friend: FriendDTO[] }>(QUERY_GET_FRIENDS);
+	const { data: requests, refetch: refetchReqCount } = useQuery<{
+		friendRequest: FriendRequestListDTO;
+	}>(QUERY_GET_FRIEND_REQUESTS);
 	const navigate = useNavigate();
+
+	useEffect(() => {
+		if (error) {
+			fErr("Could not friends");
+		}
+	}, [error]);
 
 	useEvent("friend_request_update", () => {
 		refetch();
@@ -353,10 +370,9 @@ function TabFriends() {
 	});
 
 	function openDm(friendId: string) {
-		Axios.get<DmDTO>(`/dm/friend/${friendId}`)
-			.then((res) => {
-				navigate(`/dm/${res.data.dmId}`);
-			})
+		apollo
+			.mutate<{ openFriendDm: DmDTO }>({ mutation: QUERY_MAKE_DM, variables: { friendId } })
+			.then(({ data }) => navigate(`/dm/${data?.openFriendDm.id}`))
 			.catch(() => fErr("Could not open chat"));
 	}
 
@@ -369,22 +385,29 @@ function TabFriends() {
 				<Button
 					onClick={() => setRequestsModalOpen(true)}
 					sx={{ flex: "1 1" }}
-					disabled={!reqCount || (reqCount.received === 0 && reqCount.sent === 0)}
+					disabled={
+						!requests ||
+						(requests.friendRequest.received.length === 0 && requests.friendRequest.sent.length === 0)
+					}
 				>
 					Pending
 				</Button>
 			</Box>
 			<Divider />
 			<AddFriendDialog open={addFriendModalOpen} setOpen={setAddFriendModalOpen} />
-			{reqCount && requestsModalOpen && (
-				<PendingRequestsDialog open={true} setOpen={setRequestsModalOpen} count={reqCount} />
+			{requests && requestsModalOpen && (
+				<PendingRequestsDialog open={true} setOpen={setRequestsModalOpen} requests={requests.friendRequest} />
 			)}
-			{data === undefined ? (
+			{loading ? (
 				<Box sx={{ display: "flex", gap: 1, alignItems: "center" }}>
 					<Spinner />
 					<span>Loading</span>
 				</Box>
-			) : data.length === 0 ? (
+			) : !data ? (
+				<Box sx={{ display: "flex", gap: 1, alignItems: "center" }}>
+					<span>An error occurred</span>
+				</Box>
+			) : data.friend.length === 0 ? (
 				<Box
 					sx={{
 						display: "flex",
@@ -400,9 +423,9 @@ function TabFriends() {
 					<Typography>It's lonely here</Typography>
 				</Box>
 			) : (
-				data.map((friend) => (
+				data.friend.map((friend) => (
 					<Box
-						key={friend.friendId}
+						key={friend.id}
 						sx={[
 							{
 								p: 1,
@@ -424,12 +447,12 @@ function TabFriends() {
 						]}
 						role={"link"}
 						aria-label={"open chat"}
-						onClick={() => openDm(friend.friendId)}
+						onClick={() => openDm(friend.id)}
 					>
 						<Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-							<Avatar aria-hidden={true} src={friend.thumbnail} />
+							<Avatar aria-hidden={true} src={friend.user.thumbnail} />
 							<Typography variant={"body1"} component={"h3"}>
-								{friend.username}
+								{friend.user.username}
 							</Typography>
 						</Box>
 					</Box>

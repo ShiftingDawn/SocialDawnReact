@@ -1,18 +1,15 @@
 import { FormEvent, useMemo, useState } from "react";
 import { Alert, Button, Container, Paper, Stack, TextField } from "@mui/material";
-import { useApi } from "@lib/api.ts";
+import useAxios from "axios-hooks";
 import { PageTitle } from "$/Text.tsx";
-import { ChangePasswordDTO } from "#/ChangePasswordDTO";
+import { ChangePasswordRequestDTO } from "#/dto.ts";
 
 function PageAccountChangePassword() {
 	const [currentPassword, setCurrentPassword] = useState<string>("");
 	const [password, setPassword] = useState<string>("");
 	const [passwordConfirm, setPasswordConfirm] = useState<string>("");
-	const [{ response, error }, sendRequest] = useApi<undefined, ChangePasswordDTO>(
-		{
-			url: "/auth/password",
-			method: "put",
-		},
+	const [{ response, error }, sendRequest] = useAxios<undefined, ChangePasswordRequestDTO, ErrorResponse>(
+		{ url: "/auth/password", method: "put" },
 		{ manual: true },
 	);
 
