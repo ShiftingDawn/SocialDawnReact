@@ -9,22 +9,22 @@ import { Emoji, EmojiPicker } from "$/EmojiPicker.tsx";
 import { RenderedText } from "$/RenderedText.tsx";
 import { Spinner } from "$/Spinner.tsx";
 import { Time } from "$/Time.tsx";
-import { QUERY_GET_DM, QUERY_GET_DM_MESSAGES } from "#/queries.ts";
-import { DmDTO, DmMessageDTO } from "#/schema.ts";
+import { QUERY_GET_DM_MESSAGES, QUERY_GET_FRIEND } from "#/queries.ts";
+import { DmMessageDTO, FriendDTO } from "#/schema.ts";
 
-function UserChatPage() {
-	const { dmId } = useParams();
-	const { data } = useQuery<{ dm: DmDTO }>(QUERY_GET_DM, {
-		variables: { dmId },
+function PageDM() {
+	const { friendId } = useParams();
+	const { data } = useQuery<{ friend: FriendDTO }>(QUERY_GET_FRIEND, {
+		variables: { friendId },
 	});
 	const socket = useSocket();
 
 	useEffect(() => {
-		if (!data?.dm?.id) return;
+		if (!data?.friend.dm.id) return;
 		if (socket) {
-			socket.emit("dm_connect", { dm: data.dm.id });
+			socket.emit("dm_connect", { dm: data.friend.dm.id });
 			return () => {
-				socket.emit("dm_disconnect", { dm: data.dm.id });
+				socket.emit("dm_disconnect", { dm: data.friend.dm.id });
 			};
 		}
 	}, [socket, data]);
@@ -44,15 +44,15 @@ function UserChatPage() {
 				<Spinner />
 			) : (
 				<>
-					<MessageList dm={data.dm.id} />
-					<Chatbar dm={data.dm.id} />
+					<MessageList dm={data.friend.dm.id} />
+					<Chatbar dm={data.friend.dm.id} />
 				</>
 			)}
 		</Box>
 	);
 }
 
-export default UserChatPage;
+export default PageDM;
 
 function Chatbar({ dm }: { dm: string }) {
 	const socket = useSocket();
@@ -82,13 +82,7 @@ function Chatbar({ dm }: { dm: string }) {
 
 	return (
 		<form onSubmit={handleSubmit}>
-			<Box
-				sx={{
-					display: "flex",
-					gap: 1,
-					p: 1,
-				}}
-			>
+			<Box sx={{ display: "flex", gap: 1, p: 1 }}>
 				<Box
 					sx={[
 						{ flex: "0 0", backgroundColor: "grey.200", display: "flex", borderRadius: "20px" },
@@ -142,10 +136,14 @@ function MessageList({ dm }: { dm: string }) {
 	const socket = useSocket();
 
 	function addMessages(messages: DmMessageDTO[], prepend: boolean = false) {
+		console.log(messages);
 		if (prepend) {
 			setMessages((current) => [...messages.filter((msg) => !current.find((v) => v.id === msg.id)), ...current]);
 		} else {
-			setMessages((current) => [...current, ...messages.filter((msg) => !current.find((v) => v.id === msg.id))]);
+			setMessages((current) => {
+				const res = [...current, ...messages.filter((msg) => !current.find((v) => v.id === msg.id))];
+				return res;
+			});
 		}
 	}
 

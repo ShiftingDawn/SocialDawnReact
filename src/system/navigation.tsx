@@ -23,7 +23,6 @@ import {
 } from "@mui/material";
 import {
 	AccountCircle as AccountCircleIcon,
-	Chat as ChatIcon,
 	ChevronLeft as ChevronLeftIcon,
 	DarkMode as DarkModeIcon,
 	AdminPanelSettings as IconAdminPanelSettings,
@@ -36,15 +35,14 @@ import {
 } from "@mui/icons-material";
 import { useQuery } from "@apollo/client";
 import { TabContext, TabList } from "@mui/lab";
-import { apollo } from "@lib/api.ts";
 import { useEvent } from "@lib/event.ts";
 import { fErr } from "@lib/flash.ts";
 import { useSession } from "@lib/session.context.ts";
 import { AddFriendDialog } from "$/AddFriendDialog.tsx";
 import { PendingRequestsDialog } from "$/PendingRequestsDialog.tsx";
 import { Spinner } from "$/Spinner.tsx";
-import { QUERY_GET_DMS, QUERY_GET_FRIENDS, QUERY_GET_FRIEND_REQUESTS, QUERY_MAKE_DM } from "#/queries";
-import { DmDTO, FriendDTO, FriendRequestListDTO } from "#/schema";
+import { QUERY_GET_FRIENDS, QUERY_GET_FRIEND_REQUESTS } from "#/queries";
+import { FriendDTO, FriendRequestListDTO } from "#/schema";
 
 export const DRAWER_WIDTH = 300;
 
@@ -228,16 +226,16 @@ const StyledTab = styled(Tab)(({}) => ({
 	textTransform: "none",
 }));
 
-type TabPanelTab = "dm" | "friends" | "guilds" | "channels";
+type TabPanelTab = "friends" | "guilds" | "channels";
 
 function Sidebar() {
-	const [currentTab, setCurrentTab] = useState<TabPanelTab>("dm");
+	const [currentTab, setCurrentTab] = useState<TabPanelTab>("friends");
 	const { pathname } = useLocation();
 
 	useEffect(() => {
 		let expectedTab: TabPanelTab | null = null;
 		if (pathname.startsWith("/dm/")) {
-			expectedTab = "dm";
+			expectedTab = "friends";
 		} else if (pathname.startsWith("/guild/")) {
 			expectedTab = "channels";
 		}
@@ -250,7 +248,6 @@ function Sidebar() {
 		<TabContext value={currentTab}>
 			<Box sx={{ borderBottom: 1, borderColor: "divider" }}>
 				<TabList onChange={(_, newTab) => setCurrentTab(newTab)} aria-label="Chat list types">
-					<StyledTab value={"dm"} aria-label={"chats"} label={"Chats"} icon={<ChatIcon />} />
 					<StyledTab value={"friends"} aria-label="friends" label={"Friends"} icon={<PeopleAltIcon />} />
 					<StyledTab value={"guilds"} aria-label="guilds" label={"Guilds"} icon={<PeopleAltIcon />} />
 					{pathname.startsWith("/guild/") && (
@@ -263,96 +260,107 @@ function Sidebar() {
 					)}
 				</TabList>
 			</Box>
-			{currentTab === "dm" && <TabDms />}
 			{currentTab === "friends" && <TabFriends />}
 		</TabContext>
 	);
 }
 
-function TabDms() {
-	const { loading, error, data } = useQuery<{ dms: DmDTO[] }>(QUERY_GET_DMS);
-	const navigate = useNavigate();
-
-	function openDm(dmId: string) {
-		navigate(`/dm/${dmId}`);
-	}
-
-	useEffect(() => {
-		if (error) {
-			fErr("Could not retrieve chats");
-		}
-	}, [error]);
-
-	return (
-		<Stack>
-			{loading ? (
-				<Box sx={{ display: "flex", gap: 1, alignItems: "center" }}>
-					<Spinner />
-					<span>Loading</span>
-				</Box>
-			) : !data ? (
-				<Box sx={{ display: "flex", gap: 1, alignItems: "center" }}>
-					<span>An error occurred</span>
-				</Box>
-			) : data.dms.length === 0 ? (
-				<Box
-					sx={{
-						display: "flex",
-						alignItems: "center",
-						justifyContent: "center",
-						flexDirection: "column",
-						pt: 2,
-					}}
-				>
-					<Typography variant={"h4"} aria-hidden={true}>
-						(´•︵•`)
-					</Typography>
-					<Typography>It's lonely here</Typography>
-				</Box>
-			) : (
-				data.dms.map((dm) => (
-					<Box
-						key={dm.id}
-						sx={[
-							{
-								p: 1,
-								display: "flex",
-								alignItems: "center",
-								justifyContent: "space-between",
-								transition: "background .1s ease-in-out",
-								cursor: "pointer",
-								"&:hover": {
-									backgroundColor: "rgba(0,0,0,.1)",
-								},
-							},
-							(theme) =>
-								theme.applyStyles("dark", {
-									"&:hover": {
-										backgroundColor: "rgba(255,255,255,.1)",
-									},
-								}),
-						]}
-						role={"link"}
-						aria-label={"open chat"}
-						onClick={() => openDm(dm.id)}
-					>
-						<Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-							<Avatar aria-hidden={true} src={dm.user.thumbnail} />
-							<Typography variant={"body1"} component={"h3"}>
-								{dm.user.username}
-							</Typography>
-						</Box>
-					</Box>
-				))
-			)}
-		</Stack>
-	);
-}
+// function TabDms() {
+// 	const { loading, error, data } = useQuery<{ dms: DmDTO[] }>(QUERY_GET_DMS);
+// 	const navigate = useNavigate();
+// 	const { pathname } = useLocation();
+//
+// 	//We are not inside a Route component so we need to manually extract the id from the url
+// 	const urlDmId = useMemo(() => (pathname.startsWith("/dm/") ? pathname.split("/")[2] : undefined), [pathname]);
+//
+// 	function openDm(dmId: string) {
+// 		navigate(`/dm/${dmId}`);
+// 	}
+//
+// 	useEffect(() => {
+// 		if (error) {
+// 			fErr("Could not retrieve chats");
+// 		}
+// 	}, [error]);
+//
+// 	return (
+// 		<Stack>
+// 			{loading ? (
+// 				<Box sx={{ display: "flex", gap: 1, alignItems: "center" }}>
+// 					<Spinner />
+// 					<span>Loading</span>
+// 				</Box>
+// 			) : !data ? (
+// 				<Box sx={{ display: "flex", gap: 1, alignItems: "center" }}>
+// 					<span>An error occurred</span>
+// 				</Box>
+// 			) : data.dms.length === 0 ? (
+// 				<Box
+// 					sx={{
+// 						display: "flex",
+// 						alignItems: "center",
+// 						justifyContent: "center",
+// 						flexDirection: "column",
+// 						pt: 2,
+// 					}}
+// 				>
+// 					<Typography variant={"h4"} aria-hidden={true}>
+// 						(´•︵•`)
+// 					</Typography>
+// 					<Typography>It's lonely here</Typography>
+// 				</Box>
+// 			) : (
+// 				data.dms.map((dm) => {
+// 					const active = urlDmId === dm.id;
+// 					return (
+// 						<Box
+// 							key={dm.id}
+// 							sx={[
+// 								{
+// 									p: 1,
+// 									display: "flex",
+// 									alignItems: "center",
+// 									justifyContent: "space-between",
+// 									transition: "background .1s ease-in-out",
+// 									cursor: "pointer",
+// 									"&:hover": {
+// 										backgroundColor: "rgba(0,0,0,.1)",
+// 									},
+// 									backgroundColor: active ? "rgba(0,0,0,.1)" : undefined,
+// 								},
+// 								(theme) =>
+// 									theme.applyStyles("dark", {
+// 										"&:hover": {
+// 											backgroundColor: "rgba(255,255,255,.1)",
+// 										},
+// 									}),
+// 							]}
+// 							role={"link"}
+// 							aria-label={"open chat"}
+// 							onClick={() => openDm(dm.id)}
+// 						>
+// 							<Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+// 								<Avatar aria-hidden={true} src={dm.user.thumbnail} />
+// 								<Typography
+// 									variant={"body1"}
+// 									component={"h3"}
+// 									sx={{ fontWeight: active ? "bold" : undefined }}
+// 								>
+// 									{dm.user.username}
+// 								</Typography>
+// 							</Box>
+// 						</Box>
+// 					);
+// 				})
+// 			)}
+// 		</Stack>
+// 	);
+// }
 
 function TabFriends() {
 	const [addFriendModalOpen, setAddFriendModalOpen] = useState(false);
 	const [requestsModalOpen, setRequestsModalOpen] = useState(false);
-	const { data, loading, error, refetch } = useQuery<{ friend: FriendDTO[] }>(QUERY_GET_FRIENDS);
+	const { data, loading, error, refetch } = useQuery<{ friends: FriendDTO[] }>(QUERY_GET_FRIENDS);
 	const { data: requests, refetch: refetchReqCount } = useQuery<{
 		friendRequest: FriendRequestListDTO;
 	}>(QUERY_GET_FRIEND_REQUESTS);
@@ -370,10 +378,7 @@ function TabFriends() {
 	});
 
 	function openDm(friendId: string) {
-		apollo
-			.mutate<{ openFriendDm: DmDTO }>({ mutation: QUERY_MAKE_DM, variables: { friendId } })
-			.then(({ data }) => navigate(`/dm/${data?.openFriendDm.id}`))
-			.catch(() => fErr("Could not open chat"));
+		navigate(`/dm/${friendId}`);
 	}
 
 	return (
@@ -407,7 +412,7 @@ function TabFriends() {
 				<Box sx={{ display: "flex", gap: 1, alignItems: "center" }}>
 					<span>An error occurred</span>
 				</Box>
-			) : data.friend.length === 0 ? (
+			) : data.friends.length === 0 ? (
 				<Box
 					sx={{
 						display: "flex",
@@ -423,7 +428,7 @@ function TabFriends() {
 					<Typography>It's lonely here</Typography>
 				</Box>
 			) : (
-				data.friend.map((friend) => (
+				data.friends.map((friend) => (
 					<Box
 						key={friend.id}
 						sx={[

@@ -11,6 +11,7 @@ export interface FriendDTO {
 	id: string;
 	since: Date;
 	user: UserDTO;
+	dm: DmDTO;
 }
 
 export interface FriendRequestListDTO {
@@ -26,8 +27,8 @@ export interface FriendRequestDTO {
 
 export interface DmDTO {
 	id: string;
-	user: UserDTO;
 	messages: DmMessageDTO[];
+	lastUpdate: Date;
 }
 
 export interface DmMessageDTO {

@@ -41,14 +41,30 @@ export const QUERY_GET_DM_MESSAGES = gql`
 `;
 
 export const QUERY_GET_FRIENDS = gql`
-	query GetFriend {
-		friend {
+	query GetFriends {
+		friends {
 			id
 			user {
 				username
 				thumbnail
 			}
 			since
+		}
+	}
+`;
+
+export const QUERY_GET_FRIEND = gql`
+	query GetFriend($friendId: String!) {
+		friend(friendId: $friendId) {
+			id
+			user {
+				username
+				thumbnail
+			}
+			since
+			dm {
+				id
+			}
 		}
 	}
 `;
@@ -70,14 +86,6 @@ export const QUERY_GET_FRIEND_REQUESTS = gql`
 				}
 				sentAt
 			}
-		}
-	}
-`;
-
-export const QUERY_MAKE_DM = gql`
-	mutation OpenFriendDm($friendId: String!) {
-		openFriendDm(friendId: $friendId) {
-			id
 		}
 	}
 `;
