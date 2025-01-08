@@ -13,28 +13,29 @@ export const QUERY_GET_DMS = gql`
 `;
 
 export const QUERY_GET_DM = gql`
-	query GetDm($dmId: String!) {
-		dm(dmId: $dmId) {
+	query GetFriendAndDM($friendId: ID!) {
+		friend(friendId: $friendId) {
 			id
 			user {
 				username
-				thumbnail
 			}
+		}
+		dm(friendId: $friendId) {
+			id
 		}
 	}
 `;
 
 export const QUERY_GET_DM_MESSAGES = gql`
-	query GetDmMessages($dmId: String!, $lastMessage: String, $take: Int!) {
-		dmMessages(dmId: $dmId, last: $lastMessage, take: $take) {
-			id
-			sentAt
-			content
-			responseTo {
+	query GetDmMessages($friendId: ID!, $lastMessage: ID, $take: Int!) {
+		dm(friendId: $friendId) {
+			messages(last: $lastMessage, take: $take) {
 				id
-			}
-			sender {
-				username
+				sentAt
+				content
+				sender {
+					username
+				}
 			}
 		}
 	}
@@ -53,25 +54,9 @@ export const QUERY_GET_FRIENDS = gql`
 	}
 `;
 
-export const QUERY_GET_FRIEND = gql`
-	query GetFriend($friendId: String!) {
-		friend(friendId: $friendId) {
-			id
-			user {
-				username
-				thumbnail
-			}
-			since
-			dm {
-				id
-			}
-		}
-	}
-`;
-
 export const QUERY_GET_FRIEND_REQUESTS = gql`
 	query GetFriendRequests {
-		friendRequest {
+		friendRequests {
 			sent {
 				id
 				user {

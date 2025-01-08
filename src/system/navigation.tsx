@@ -265,110 +265,18 @@ function Sidebar() {
 	);
 }
 
-// function TabDms() {
-// 	const { loading, error, data } = useQuery<{ dms: DmDTO[] }>(QUERY_GET_DMS);
-// 	const navigate = useNavigate();
-// 	const { pathname } = useLocation();
-//
-// 	//We are not inside a Route component so we need to manually extract the id from the url
-// 	const urlDmId = useMemo(() => (pathname.startsWith("/dm/") ? pathname.split("/")[2] : undefined), [pathname]);
-//
-// 	function openDm(dmId: string) {
-// 		navigate(`/dm/${dmId}`);
-// 	}
-//
-// 	useEffect(() => {
-// 		if (error) {
-// 			fErr("Could not retrieve chats");
-// 		}
-// 	}, [error]);
-//
-// 	return (
-// 		<Stack>
-// 			{loading ? (
-// 				<Box sx={{ display: "flex", gap: 1, alignItems: "center" }}>
-// 					<Spinner />
-// 					<span>Loading</span>
-// 				</Box>
-// 			) : !data ? (
-// 				<Box sx={{ display: "flex", gap: 1, alignItems: "center" }}>
-// 					<span>An error occurred</span>
-// 				</Box>
-// 			) : data.dms.length === 0 ? (
-// 				<Box
-// 					sx={{
-// 						display: "flex",
-// 						alignItems: "center",
-// 						justifyContent: "center",
-// 						flexDirection: "column",
-// 						pt: 2,
-// 					}}
-// 				>
-// 					<Typography variant={"h4"} aria-hidden={true}>
-// 						(´•︵•`)
-// 					</Typography>
-// 					<Typography>It's lonely here</Typography>
-// 				</Box>
-// 			) : (
-// 				data.dms.map((dm) => {
-// 					const active = urlDmId === dm.id;
-// 					return (
-// 						<Box
-// 							key={dm.id}
-// 							sx={[
-// 								{
-// 									p: 1,
-// 									display: "flex",
-// 									alignItems: "center",
-// 									justifyContent: "space-between",
-// 									transition: "background .1s ease-in-out",
-// 									cursor: "pointer",
-// 									"&:hover": {
-// 										backgroundColor: "rgba(0,0,0,.1)",
-// 									},
-// 									backgroundColor: active ? "rgba(0,0,0,.1)" : undefined,
-// 								},
-// 								(theme) =>
-// 									theme.applyStyles("dark", {
-// 										"&:hover": {
-// 											backgroundColor: "rgba(255,255,255,.1)",
-// 										},
-// 									}),
-// 							]}
-// 							role={"link"}
-// 							aria-label={"open chat"}
-// 							onClick={() => openDm(dm.id)}
-// 						>
-// 							<Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-// 								<Avatar aria-hidden={true} src={dm.user.thumbnail} />
-// 								<Typography
-// 									variant={"body1"}
-// 									component={"h3"}
-// 									sx={{ fontWeight: active ? "bold" : undefined }}
-// 								>
-// 									{dm.user.username}
-// 								</Typography>
-// 							</Box>
-// 						</Box>
-// 					);
-// 				})
-// 			)}
-// 		</Stack>
-// 	);
-// }
-
 function TabFriends() {
 	const [addFriendModalOpen, setAddFriendModalOpen] = useState(false);
 	const [requestsModalOpen, setRequestsModalOpen] = useState(false);
 	const { data, loading, error, refetch } = useQuery<{ friends: FriendDTO[] }>(QUERY_GET_FRIENDS);
 	const { data: requests, refetch: refetchReqCount } = useQuery<{
-		friendRequest: FriendRequestListDTO;
+		friendRequests: FriendRequestListDTO;
 	}>(QUERY_GET_FRIEND_REQUESTS);
 	const navigate = useNavigate();
 
 	useEffect(() => {
 		if (error) {
-			fErr("Could not friends");
+			fErr("Could not load friend list");
 		}
 	}, [error]);
 
@@ -392,7 +300,7 @@ function TabFriends() {
 					sx={{ flex: "1 1" }}
 					disabled={
 						!requests ||
-						(requests.friendRequest.received.length === 0 && requests.friendRequest.sent.length === 0)
+						(requests.friendRequests.received.length === 0 && requests.friendRequests.sent.length === 0)
 					}
 				>
 					Pending
@@ -401,7 +309,7 @@ function TabFriends() {
 			<Divider />
 			<AddFriendDialog open={addFriendModalOpen} setOpen={setAddFriendModalOpen} />
 			{requests && requestsModalOpen && (
-				<PendingRequestsDialog open={true} setOpen={setRequestsModalOpen} requests={requests.friendRequest} />
+				<PendingRequestsDialog open={true} setOpen={setRequestsModalOpen} requests={requests.friendRequests} />
 			)}
 			{loading ? (
 				<Box sx={{ display: "flex", gap: 1, alignItems: "center" }}>

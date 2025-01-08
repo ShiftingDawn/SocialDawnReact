@@ -53,7 +53,7 @@ export default function ({ children }: PC) {
 					case "destroy":
 						if (InternalSessionStore.session !== null) {
 							if (reason === "signout") {
-								await Axios.post("/auth/destroy");
+								await Axios.post("/auth/logout");
 							}
 							setSession(null);
 							InternalSessionStore.session = null;

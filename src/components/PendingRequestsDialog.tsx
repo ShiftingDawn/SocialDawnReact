@@ -15,6 +15,7 @@ import { Check as CheckIcon, Close as CloseIcon, ExpandMore as ExpandMoreIcon } 
 import Axios from "axios";
 import { post } from "@lib/event.ts";
 import { fSuccess } from "@lib/flash.ts";
+import { AcceptFriendRequestDTO } from "#/dto.ts";
 import { FriendRequestDTO, FriendRequestListDTO } from "#/schema.ts";
 
 interface PendingRequestsDialogProps {
@@ -52,19 +53,26 @@ export function PendingRequestsDialog({ open, setOpen, requests }: PendingReques
 }
 
 function FriendRequestList({ type, data }: { data: FriendRequestDTO[]; type: "sent" | "received" }) {
-	function handleDelete(id: string) {
-		Axios.delete(`/friend/request/${id}`).then(() => {
-			post("friend_request_update");
-			fSuccess("Friend request deleted");
-		});
-	}
-
 	function handleAccept(id: string) {
 		if (type !== "received") return;
-		Axios.post(`/friend/request/${id}`).then(() => {
+		Axios.post(`/friend/request/${id}`, { accept: true } satisfies AcceptFriendRequestDTO).then(() => {
 			post("friend_request_update");
 			fSuccess("Friend request accepted");
 		});
+	}
+
+	function handleDelete(id: string) {
+		if (type === "sent") {
+			Axios.delete(`/friend/request/${id}`).then(() => {
+				post("friend_request_update");
+				fSuccess("Friend request deleted");
+			});
+		} else {
+			Axios.post(`/friend/request/${id}`, { accept: false } satisfies AcceptFriendRequestDTO).then(() => {
+				post("friend_request_update");
+				fSuccess("Friend request denied");
+			});
+		}
 	}
 
 	return (

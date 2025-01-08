@@ -21,8 +21,8 @@ function LoginPage() {
 		event.preventDefault();
 		Axios.post<LoginResponseDTO>("/auth/login", { email: email, password: password } satisfies LoginRequestDTO)
 			.then(({ data }) => {
-				if (data.loginToken) {
-					setTotpToken(data.loginToken);
+				if (data.token) {
+					setTotpToken(data.token);
 				} else {
 					updateSession("signin").then(() => {
 						fSuccess("Welcome back!");

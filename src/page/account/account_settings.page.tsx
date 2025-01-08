@@ -8,18 +8,21 @@ import {
 	DialogActions,
 	DialogContent,
 	DialogTitle,
+	Stack,
+	Step,
+	StepContent,
+	StepLabel,
+	Stepper,
 	TextField,
 	Typography,
 } from "@mui/material";
 import useAxios from "axios-hooks";
-import { URI } from "otpauth";
-import QRCode from "react-qr-code";
 import { fErr, fInfo, fSuccess } from "@lib/flash.ts";
 import { useSession } from "@lib/session.context.ts";
 import { SimpleCard } from "$/SimpleCard.tsx";
 import { Spinner, SpinnerBox } from "$/Spinner.tsx";
 import { PageTitle } from "$/Text.tsx";
-import { OneTimeCodeRequestDTO, TotpStatusResponseDTO } from "#/dto.ts";
+import { EnableTotpResponseDTO, TotpStatusResponseDTO } from "#/dto.ts";
 
 function PageAccountSettings() {
 	const { session } = useSession();
@@ -48,14 +51,14 @@ function PageAccountSettings() {
 							</>
 						)}
 						{error && <strong>Could not retrieve status</strong>}
-						{data?.totpState === "disabled" && <strong>Disabled</strong>}
-						{data?.totpState === "enabled" && <span>Enabled</span>}
-						{data?.totpState === "needs_validation" && <strong>Unverified</strong>}
+						{data?.totpState === "DISABLED" && <strong>Disabled</strong>}
+						{data?.totpState === "ENABLED" && <span>Enabled</span>}
+						{data?.totpState === "NEEDS_VALIDATION" && <strong>Unverified</strong>}
 					</Box>
-					{data && data.totpState !== "enabled" && (
+					{data && data.totpState !== "ENABLED" && (
 						<Button onClick={() => setTotpDialogOpen(true)} fullWidth sx={{ justifyContent: "start" }}>
-							{data.totpState === "disabled" && "Enable 2 Factor Authentication"}
-							{data.totpState === "needs_validation" && "Verify 2 Factor Authentication"}
+							{data.totpState === "DISABLED" && "Enable 2 Factor Authentication"}
+							{data.totpState === "NEEDS_VALIDATION" && "Verify 2 Factor Authentication"}
 						</Button>
 					)}
 					<Button component={Link} to={"/account/changepassword"} sx={{ display: "block" }}>
@@ -112,106 +115,118 @@ function LogOutEverywhereDialog({ open, onClose }: DialogProps) {
 }
 
 function TotpDialog({ open, onClose }: DialogProps) {
-	const [{ data, loading }, refetch] = useAxios<TotpStatusResponseDTO>("/auth/totp");
-
-	useEffect(() => {
-		if (data?.totpState === "enabled") {
-			onClose();
-		}
-	}, [data?.totpState]);
-
-	return (
-		<Dialog open={open} fullWidth maxWidth={"sm"}>
-			<DialogTitle>2 Factor Authentication</DialogTitle>
-			<DialogContent>
-				<Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-					{(loading || !data) && <SpinnerBox />}
-					{data?.totpState === "disabled" && <EnablePage callback={refetch} />}
-					{data?.totpState === "needs_validation" && <VerifyPage callback={refetch} />}
-				</Box>
-			</DialogContent>
-			<DialogActions>
-				<Button onClick={onClose}>Cancel</Button>
-			</DialogActions>
-		</Dialog>
-	);
-}
-
-function EnablePage({ callback }: { callback: () => void }) {
-	const [{ loading }, enable] = useAxios<TotpStatusResponseDTO>(
-		{ url: "/auth/totp/create", method: "post" },
+	const [{ loading, data }, enable] = useAxios<EnableTotpResponseDTO>(
+		{ url: "/auth/totp", method: "post" },
 		{ manual: true },
 	);
+	const [{ loading: validating, error: validationError }, validate] = useAxios(
+		{ url: "/auth/totp/activate", method: "post" },
+		{ manual: true },
+	);
+	const [step, setStep] = useState(0);
+	const [validationCode, setValidationCode] = useState("");
 
 	function handleEnable() {
 		enable()
-			.then(() => {
-				fInfo("2 Factor authentication is enabled but not verified yet.");
-				callback();
-			})
+			.then(() => fInfo("2 Factor authentication is enabled but not verified yet."))
 			.catch(() => fErr("Could not enable 2 factor authentication. Please try again later."));
-	}
-
-	return (
-		<Button onClick={handleEnable} disabled={loading}>
-			Enable 2 Factor Authentication
-		</Button>
-	);
-}
-
-function VerifyPage({ callback }: { callback: () => void }) {
-	const [{ data, loading }] = useAxios<string>("/auth/totp/create");
-	const [{ loading: validationLoading, error: validationError }, validate] = useAxios<
-		undefined,
-		OneTimeCodeRequestDTO
-	>({ url: "/auth/totp/activate", method: "post" }, { manual: true });
-	const [secret, setSecret] = useState<string>();
-	const [validationCode, setValidationCode] = useState("");
-
-	function showCode() {
-		const totp = URI.parse(data as string);
-		setSecret(totp.secret.base32);
 	}
 
 	function handleValidateCode() {
 		validate({ data: { code: validationCode } }).then(() => {
 			fSuccess("2 Factor Authentication has been validated and enabled.");
-			callback();
+			onClose();
 		});
 	}
 
-	return loading || !data ? (
-		<SpinnerBox />
-	) : (
-		<>
-			<Box sx={{ display: "flex", justifyContent: "center" }}>
-				<Box sx={{ background: "white", padding: "16px" }}>
-					<QRCode value={data} />
+	return (
+		<Dialog open={open} fullWidth maxWidth={"xs"}>
+			<DialogTitle>2 Factor Authentication</DialogTitle>
+			<DialogContent>
+				<Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+					{loading ? (
+						<SpinnerBox />
+					) : !data ? (
+						<Button onClick={handleEnable} disabled={loading}>
+							Enable 2 Factor Authentication
+						</Button>
+					) : (
+						<Stepper orientation={"vertical"} activeStep={step}>
+							<Step>
+								<StepLabel>
+									{step === 0 ? (
+										<span>
+											Scan the QRCode with an authenticator app or enter the following code
+											manually: <code>{data.secret}</code>
+										</span>
+									) : (
+										<span>Scan the QRCode</span>
+									)}
+								</StepLabel>
+								<StepContent>
+									<Stack>
+										<img
+											src={data.qrcode}
+											alt={"qrcode"}
+											title={"Click to open in a new tab"}
+											style={{ width: "min-content" }}
+										/>
+										<Button
+											onClick={() => {
+												const newTab = window.open("", "_blank");
+												newTab?.document.write(`<img src="${data?.qrcode}"/>`);
+												newTab?.document.close();
+											}}
+										>
+											Open in new tab
+										</Button>
+									</Stack>
+								</StepContent>
+							</Step>
+							<Step>
+								<StepLabel>Verify the code</StepLabel>
+								<StepContent>
+									<TextField
+										label={"Enter one time code for verification"}
+										fullWidth
+										type={"text"}
+										value={validationCode}
+										onChange={(e) => setValidationCode(e.currentTarget.value)}
+										autoComplete={"one-time-code"}
+										error={Boolean(validationError)}
+									/>
+								</StepContent>
+							</Step>
+						</Stepper>
+					)}
 				</Box>
-			</Box>
-			<Typography>
-				Scan the QRCode with an authenticator app that supports TOTP codes like Google Authenticator, Bitwarden
-				or Proton Pass
-			</Typography>
-			{secret ? (
-				<Typography>
-					Or enter the following code manually: <code>{secret}</code>
-				</Typography>
-			) : (
-				<Button onClick={showCode}>Or click here for a manual code</Button>
-			)}
-			<TextField
-				label={"Enter one time code for verification"}
-				fullWidth
-				type={"text"}
-				value={validationCode}
-				onChange={(e) => setValidationCode(e.currentTarget.value)}
-				autoComplete={"one-time-code"}
-				error={Boolean(validationError)}
-			/>
-			<Button onClick={handleValidateCode} disabled={validationLoading}>
-				Validate code
-			</Button>
-		</>
+			</DialogContent>
+			<DialogActions>
+				<Button onClick={onClose} color={"error"}>
+					Cancel
+				</Button>
+				{step === 0 && (
+					<Button
+						onClick={() => {
+							setStep(1);
+							setValidationCode("");
+						}}
+						disabled={validating}
+					>
+						Next step
+					</Button>
+				)}
+				{step === 1 && (
+					<>
+						<Button onClick={() => setStep(0)} color={"error"} disabled={validating}>
+							Previous step
+						</Button>
+						<Button onClick={handleValidateCode} disabled={validating}>
+							Verify code
+						</Button>
+					</>
+				)}
+			</DialogActions>
+		</Dialog>
 	);
 }

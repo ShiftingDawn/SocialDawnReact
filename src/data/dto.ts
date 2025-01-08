@@ -4,7 +4,7 @@ export interface LoginRequestDTO {
 }
 
 export interface LoginResponseDTO {
-	loginToken: string | null;
+	token: string | null;
 }
 
 export interface RegisterRequestDTO {
@@ -23,8 +23,8 @@ export interface AddFriendRequestDTO {
 	username: string;
 }
 
-export interface OneTimeCodeRequestDTO {
-	code: string;
+export interface AcceptFriendRequestDTO {
+	accept: boolean;
 }
 
 export interface LoginCodeRequestDTO {
@@ -33,5 +33,10 @@ export interface LoginCodeRequestDTO {
 }
 
 export interface TotpStatusResponseDTO {
-	totpState: "disabled" | "needs_validation" | "enabled";
+	totpState: "DISABLED" | "NEEDS_VALIDATION" | "ENABLED";
+}
+
+export interface EnableTotpResponseDTO {
+	secret: string;
+	qrcode: string;
 }

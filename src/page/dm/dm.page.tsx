@@ -9,22 +9,22 @@ import { Emoji, EmojiPicker } from "$/EmojiPicker.tsx";
 import { RenderedText } from "$/RenderedText.tsx";
 import { Spinner } from "$/Spinner.tsx";
 import { Time } from "$/Time.tsx";
-import { QUERY_GET_DM_MESSAGES, QUERY_GET_FRIEND } from "#/queries.ts";
-import { DmMessageDTO, FriendDTO } from "#/schema.ts";
+import { QUERY_GET_DM, QUERY_GET_DM_MESSAGES } from "#/queries.ts";
+import { DmDTO, DmMessageDTO, FriendDTO } from "#/schema.ts";
 
 function PageDM() {
 	const { friendId } = useParams();
-	const { data } = useQuery<{ friend: FriendDTO }>(QUERY_GET_FRIEND, {
+	const { data } = useQuery<{ friend: FriendDTO; dm: DmDTO }>(QUERY_GET_DM, {
 		variables: { friendId },
 	});
 	const socket = useSocket();
 
 	useEffect(() => {
-		if (!data?.friend.dm.id) return;
+		if (!data?.dm.id) return;
 		if (socket) {
-			socket.emit("dm_connect", { dm: data.friend.dm.id });
+			socket.emit("dm_connect", { dm: data.dm.id });
 			return () => {
-				socket.emit("dm_disconnect", { dm: data.friend.dm.id });
+				socket.emit("dm_disconnect", { dm: data.dm.id });
 			};
 		}
 	}, [socket, data]);
@@ -44,8 +44,8 @@ function PageDM() {
 				<Spinner />
 			) : (
 				<>
-					<MessageList dm={data.friend.dm.id} />
-					<Chatbar dm={data.friend.dm.id} />
+					<MessageList friendId={data.friend.id} />
+					<Chatbar dm={data.dm.id} />
 				</>
 			)}
 		</Box>
@@ -129,14 +129,13 @@ function Chatbar({ dm }: { dm: string }) {
 	);
 }
 
-function MessageList({ dm }: { dm: string }) {
+function MessageList({ friendId }: { friendId: string }) {
 	const [messages, setMessages] = useState<DmMessageDTO[]>([]);
 	const [scrollAtBottom, setScrollAtBottom] = useState(true);
 	const containerRef = useRef<HTMLOListElement | null>(null);
 	const socket = useSocket();
 
 	function addMessages(messages: DmMessageDTO[], prepend: boolean = false) {
-		console.log(messages);
 		if (prepend) {
 			setMessages((current) => [...messages.filter((msg) => !current.find((v) => v.id === msg.id)), ...current]);
 		} else {
@@ -168,16 +167,16 @@ function MessageList({ dm }: { dm: string }) {
 
 	function fetchMessages() {
 		apollo
-			.query<{ dmMessages: DmMessageDTO[] }, { dmId: string; last: string | null; take: number }>({
+			.query<{ dm: DmDTO }, { friendId: string; last: string | null; take: number }>({
 				query: QUERY_GET_DM_MESSAGES,
 				variables: {
-					dmId: dm,
+					friendId,
 					last: messages.length === 0 ? null : messages[messages.length - 1].id,
 					take: 50,
 				},
 			})
 			.then((data) => {
-				addMessages(data.data.dmMessages);
+				addMessages(data.data.dm.messages);
 			});
 	}
 

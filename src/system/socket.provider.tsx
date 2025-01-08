@@ -13,6 +13,7 @@ export default function ({ children }: PC) {
 			autoConnect: false,
 			transports: ["polling"],
 			withCredentials: true,
+			retries: 10,
 		});
 		socket.connect();
 		setSocket(socket);

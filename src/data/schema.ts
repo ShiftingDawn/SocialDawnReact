@@ -34,7 +34,6 @@ export interface DmDTO {
 export interface DmMessageDTO {
 	id: string;
 	sender: UserDTO;
-	responseTo?: DmMessageDTO;
 	sentAt: Date;
 	content: string;
 }
