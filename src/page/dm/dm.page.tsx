@@ -3,31 +3,20 @@ import { useParams } from "react-router";
 import { Box, Fab, IconButton, TextField, Typography, Zoom } from "@mui/material";
 import { Add as AddIcon, ArrowDownward, EmojiEmotions as EmojiIcon, Send as SendIcon } from "@mui/icons-material";
 import { useQuery } from "@apollo/client";
+import { useStompClient, useSubscription } from "react-stomp-hooks";
 import { apollo } from "@lib/api.ts";
-import { useSocket } from "@lib/socket.context.ts";
 import { Emoji, EmojiPicker } from "$/EmojiPicker.tsx";
 import { RenderedText } from "$/RenderedText.tsx";
 import { Spinner } from "$/Spinner.tsx";
 import { Time } from "$/Time.tsx";
 import { QUERY_GET_DM, QUERY_GET_DM_MESSAGES } from "#/queries.ts";
-import { DmDTO, DmMessageDTO, FriendDTO } from "#/schema.ts";
+import { DmDTO, FriendDTO } from "#/schema.ts";
 
 function PageDM() {
 	const { friendId } = useParams();
 	const { data } = useQuery<{ friend: FriendDTO; dm: DmDTO }>(QUERY_GET_DM, {
 		variables: { friendId },
 	});
-	const socket = useSocket();
-
-	useEffect(() => {
-		if (!data?.dm.id) return;
-		if (socket) {
-			socket.emit("dm_connect", { dm: data.dm.id });
-			return () => {
-				socket.emit("dm_disconnect", { dm: data.dm.id });
-			};
-		}
-	}, [socket, data]);
 
 	return (
 		<Box
@@ -45,7 +34,7 @@ function PageDM() {
 			) : (
 				<>
 					<MessageList friendId={data.friend.id} />
-					<Chatbar dm={data.dm.id} />
+					<Chatbar friendId={data.friend.id} />
 				</>
 			)}
 		</Box>
@@ -54,18 +43,22 @@ function PageDM() {
 
 export default PageDM;
 
-function Chatbar({ dm }: { dm: string }) {
-	const socket = useSocket();
+function Chatbar({ friendId }: { friendId: string }) {
 	const textFieldRef = useRef<HTMLInputElement | null>(null);
 	const [text, setText] = useState<string>("");
 	const [emojiPickerAnchor, setEmojiPickerAnchor] = useState<HTMLButtonElement | null>(null);
+	const stomp = useStompClient();
 
 	function handleSubmit(e: FormEvent) {
 		e.preventDefault();
-		if (!socket || text.trim().length === 0) {
+		if (!stomp || text.trim().length === 0) {
 			return;
 		}
-		socket.emit("dm_msg", { dm, msg: text }, () => setText(""));
+		stomp.publish({
+			destination: `/app/dm/${friendId}`,
+			body: text.trim(),
+		});
+		setText("");
 	}
 
 	function handleEmojiPicked(emoji: Emoji | null) {
@@ -129,19 +122,31 @@ function Chatbar({ dm }: { dm: string }) {
 	);
 }
 
+interface ReceivedMessage {
+	id: string;
+	username: string;
+	sentAt: Date;
+	content: string;
+}
+
 function MessageList({ friendId }: { friendId: string }) {
-	const [messages, setMessages] = useState<DmMessageDTO[]>([]);
+	const [messages, setMessages] = useState<ReceivedMessage[]>([]);
 	const [scrollAtBottom, setScrollAtBottom] = useState(true);
 	const containerRef = useRef<HTMLOListElement | null>(null);
-	const socket = useSocket();
 
-	function addMessages(messages: DmMessageDTO[], prepend: boolean = false) {
+	useSubscription(`/dm/${friendId}`, (msg) => {
+		const parsed = JSON.parse(msg.body) as ReceivedMessage;
+		addMessages([parsed], true);
+	});
+
+	function addMessages(messages: ReceivedMessage[], prepend: boolean = false) {
 		if (prepend) {
-			setMessages((current) => [...messages.filter((msg) => !current.find((v) => v.id === msg.id)), ...current]);
+			setMessages((current) => {
+				return [...messages.filter((msg) => !current.find((v) => v.id === msg.id)), ...current];
+			});
 		} else {
 			setMessages((current) => {
-				const res = [...current, ...messages.filter((msg) => !current.find((v) => v.id === msg.id))];
-				return res;
+				return [...current, ...messages.filter((msg) => !current.find((v) => v.id === msg.id))];
 			});
 		}
 	}
@@ -176,25 +181,18 @@ function MessageList({ friendId }: { friendId: string }) {
 				},
 			})
 			.then((data) => {
-				addMessages(data.data.dm.messages);
+				addMessages(
+					data.data.dm.messages.map((msg) => ({
+						id: msg.id,
+						username: msg.sender.username,
+						sentAt: new Date(msg.sentAt),
+						content: msg.content,
+					})),
+				);
 			});
 	}
 
-	function handleSocketMessage(msg: DmMessageDTO) {
-		addMessages([msg], true);
-	}
-
 	useEffect(() => fetchMessages(), []);
-
-	useEffect(() => {
-		if (socket) {
-			const s = socket;
-			s.on("message", handleSocketMessage);
-			return () => {
-				s.off("message", handleSocketMessage);
-			};
-		}
-	}, [socket]);
 
 	return (
 		<Box
@@ -234,13 +232,13 @@ function MessageList({ friendId }: { friendId: string }) {
 	);
 }
 
-function Message({ msg }: { msg: DmMessageDTO }) {
+function Message({ msg }: { msg: ReceivedMessage }) {
 	return (
 		<Box key={msg.id} sx={{ display: "flex", flexDirection: "row" }} component={"li"}>
 			<Box>{/*	TODO user avatar here */}</Box>
 			<Box sx={{ display: "flex", flexDirection: "column" }}>
 				<Typography variant={"body2"} component={"h3"} sx={{ display: "flex", gap: 1 }}>
-					<strong>{msg.sender.username}</strong>
+					<strong>{msg.username}</strong>
 					<Time value={msg.sentAt} />
 				</Typography>
 				<Typography variant={"body1"} sx={{ ml: 1 }} component={"div"}>

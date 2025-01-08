@@ -3,11 +3,12 @@ import { createRoot } from "react-dom/client";
 import { BrowserRouter } from "react-router";
 import { CssBaseline, ThemeProvider } from "@mui/material";
 import { ApolloProvider } from "@apollo/client";
+import { StompSessionProvider } from "react-stomp-hooks";
 import { Toaster as FlashContainer } from "sonner";
 import Layout from "@sys/layout.tsx";
 import SessionProvider from "@sys/session.provider.tsx";
-import SocketHandler from "@sys/socket.provider.tsx";
 import { apollo } from "@lib/api.ts";
+import { stompUrl } from "@lib/stomp.ts";
 import theme from "@lib/theme.ts";
 
 function render(): ReactNode {
@@ -18,11 +19,11 @@ function render(): ReactNode {
 				<FlashContainer position={"bottom-center"} />
 				<SessionProvider>
 					<ApolloProvider client={apollo}>
-						<SocketHandler>
+						<StompSessionProvider url={stompUrl}>
 							<BrowserRouter>
 								<Layout />
 							</BrowserRouter>
-						</SocketHandler>
+						</StompSessionProvider>
 					</ApolloProvider>
 				</SessionProvider>
 			</ThemeProvider>

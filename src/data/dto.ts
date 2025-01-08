@@ -40,3 +40,7 @@ export interface EnableTotpResponseDTO {
 	secret: string;
 	qrcode: string;
 }
+
+export interface WebSocketSessionTokenResponseDTO {
+	sessionId: string;
+}

@@ -9,7 +9,7 @@ export interface SelfUserDTO extends UserDTO {
 
 export interface FriendDTO {
 	id: string;
-	since: Date;
+	since: string;
 	user: UserDTO;
 	dm: DmDTO;
 }
@@ -22,18 +22,18 @@ export interface FriendRequestListDTO {
 export interface FriendRequestDTO {
 	id: string;
 	user: UserDTO;
-	sentAt: Date;
+	sentAt: string;
 }
 
 export interface DmDTO {
 	id: string;
 	messages: DmMessageDTO[];
-	lastUpdate: Date;
+	lastUpdate: string;
 }
 
 export interface DmMessageDTO {
 	id: string;
 	sender: UserDTO;
-	sentAt: Date;
+	sentAt: string;
 	content: string;
 }
