@@ -1,6 +1,6 @@
 import { FormEvent, useEffect, useRef, useState } from "react";
 import { useParams } from "react-router";
-import { Box, Fab, IconButton, TextField, Typography, Zoom } from "@mui/material";
+import { Box, Fab, IconButton, Input, Typography, Zoom } from "@mui/material";
 import { Add as AddIcon, ArrowDownward, EmojiEmotions as EmojiIcon, Send as SendIcon } from "@mui/icons-material";
 import { useQuery } from "@apollo/client";
 import { useStompClient, useSubscription } from "react-stomp-hooks";
@@ -78,7 +78,7 @@ function Chatbar({ friendId }: { friendId: string }) {
 			<Box sx={{ display: "flex", gap: 1, p: 1 }}>
 				<Box
 					sx={[
-						{ flex: "0 0", backgroundColor: "grey.200", display: "flex", borderRadius: "20px" },
+						{ flex: "0 0", backgroundColor: "grey.200", display: "flex", borderRadius: "40px" },
 						(theme) => theme.applyStyles("dark", { backgroundColor: "grey.800" }),
 					]}
 				>
@@ -92,19 +92,18 @@ function Chatbar({ friendId }: { friendId: string }) {
 				</Box>
 				<Box
 					sx={[
-						{ flex: "1 0", backgroundColor: "grey.200", borderRadius: "20px", overflow: "hidden" },
+						{ flex: "1 0", backgroundColor: "grey.200", borderRadius: "40px", overflow: "hidden", px: 2 },
 						(theme) => theme.applyStyles("dark", { backgroundColor: "grey.800" }),
 					]}
 				>
-					<TextField
+					<Input
 						fullWidth
-						variant={"filled"}
-						size={"small"}
-						hiddenLabel
-						sx={{ background: "transparent" }}
+						size={"medium"}
+						sx={{ height: "100%" }}
 						inputRef={textFieldRef}
 						value={text}
 						onChange={(e) => setText(e.currentTarget.value)}
+						disableUnderline
 					/>
 				</Box>
 				<Box
