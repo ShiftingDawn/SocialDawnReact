@@ -8,7 +8,7 @@ const theme = createTheme({
 				primary: purple,
 				secondary: deepPurple,
 				background: {
-					default: "#fdfdfd",
+					default: "#fff9ff",
 				},
 			},
 		},
