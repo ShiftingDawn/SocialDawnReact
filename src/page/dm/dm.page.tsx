@@ -1,6 +1,6 @@
 import { FormEvent, useEffect, useRef, useState } from "react";
 import { useParams } from "react-router";
-import { Box, Fab, IconButton, Input, Typography, Zoom } from "@mui/material";
+import { Avatar, Box, Fab, IconButton, Input, Typography, Zoom } from "@mui/material";
 import { Add as AddIcon, ArrowDownward, EmojiEmotions as EmojiIcon, Send as SendIcon } from "@mui/icons-material";
 import { useQuery } from "@apollo/client";
 import { useStompClient, useSubscription } from "react-stomp-hooks";
@@ -10,7 +10,7 @@ import { RenderedText } from "$/RenderedText.tsx";
 import { Spinner } from "$/Spinner.tsx";
 import { Time } from "$/Time.tsx";
 import { QUERY_GET_DM, QUERY_GET_DM_MESSAGES } from "#/queries.ts";
-import { DmDTO, FriendDTO } from "#/schema.ts";
+import { DmDTO, DmMessageDTO, FriendDTO } from "#/schema.ts";
 
 function PageDM() {
 	const { friendId } = useParams();
@@ -121,24 +121,17 @@ function Chatbar({ friendId }: { friendId: string }) {
 	);
 }
 
-interface ReceivedMessage {
-	id: string;
-	username: string;
-	sentAt: Date;
-	content: string;
-}
-
 function MessageList({ friendId }: { friendId: string }) {
-	const [messages, setMessages] = useState<ReceivedMessage[]>([]);
+	const [messages, setMessages] = useState<DmMessageDTO[]>([]);
 	const [scrollAtBottom, setScrollAtBottom] = useState(true);
 	const containerRef = useRef<HTMLOListElement | null>(null);
 
 	useSubscription(`/dm/${friendId}`, (msg) => {
-		const parsed = JSON.parse(msg.body) as ReceivedMessage;
+		const parsed = JSON.parse(msg.body) as DmMessageDTO;
 		addMessages([parsed], true);
 	});
 
-	function addMessages(messages: ReceivedMessage[], prepend: boolean = false) {
+	function addMessages(messages: DmMessageDTO[], prepend: boolean = false) {
 		if (prepend) {
 			setMessages((current) => {
 				return [...messages.filter((msg) => !current.find((v) => v.id === msg.id)), ...current];
@@ -180,14 +173,7 @@ function MessageList({ friendId }: { friendId: string }) {
 				},
 			})
 			.then((data) => {
-				addMessages(
-					data.data.dm.messages.map((msg) => ({
-						id: msg.id,
-						username: msg.sender.username,
-						sentAt: new Date(msg.sentAt),
-						content: msg.content,
-					})),
-				);
+				addMessages(data.data.dm.messages);
 			});
 	}
 
@@ -231,13 +217,15 @@ function MessageList({ friendId }: { friendId: string }) {
 	);
 }
 
-function Message({ msg }: { msg: ReceivedMessage }) {
+function Message({ msg }: { msg: DmMessageDTO }) {
 	return (
 		<Box key={msg.id} sx={{ display: "flex", flexDirection: "row" }} component={"li"}>
-			<Box>{/*	TODO user avatar here */}</Box>
+			<Box sx={{ mr: 2 }}>
+				<Avatar src={msg.sender.thumbnail} />
+			</Box>
 			<Box sx={{ display: "flex", flexDirection: "column" }}>
 				<Typography variant={"body2"} component={"h3"} sx={{ display: "flex", gap: 1 }}>
-					<strong>{msg.username}</strong>
+					<strong>{msg.sender.username}</strong>
 					<Time value={msg.sentAt} />
 				</Typography>
 				<Typography variant={"body1"} sx={{ ml: 1 }} component={"div"}>

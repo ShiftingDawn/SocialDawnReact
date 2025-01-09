@@ -35,6 +35,7 @@ export const QUERY_GET_DM_MESSAGES = gql`
 				content
 				sender {
 					username
+					thumbnail
 				}
 			}
 		}
