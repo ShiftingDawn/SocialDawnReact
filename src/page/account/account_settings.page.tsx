@@ -3,7 +3,6 @@ import { Link } from "react-router";
 import {
 	Box,
 	Button,
-	Container,
 	Dialog,
 	DialogActions,
 	DialogContent,
@@ -19,67 +18,63 @@ import {
 import useAxios from "axios-hooks";
 import { fErr, fInfo, fSuccess } from "@lib/flash.ts";
 import { useSession } from "@lib/session.context.ts";
-import { SimpleCard } from "$/SimpleCard.tsx";
+import { MultiPage, MultiPageWrapper } from "$/PageWrapper.tsx";
 import { Spinner, SpinnerBox } from "$/Spinner.tsx";
-import { PageTitle } from "$/Text.tsx";
 import { EnableTotpResponseDTO, TotpStatusResponseDTO } from "#/dto.ts";
 
 function PageAccountSettings() {
+	const [{ data, loading, error }, refetch] = useAxios<TotpStatusResponseDTO>("/auth/totp");
 	const { session } = useSession();
 	const [destroySessionDialogOpen, setDestroySessionDialogOpen] = useState(false);
 	const [totpDialogOpen, setTotpDialogOpen] = useState(false);
-	const [{ data, loading, error }, refetch] = useAxios<TotpStatusResponseDTO>("/auth/totp");
 
 	useEffect(() => {
 		refetch().catch(() => {});
 	}, [totpDialogOpen]);
 
 	return (
-		<Container maxWidth={"sm"} sx={{ pt: 3 }}>
-			<PageTitle>Account Settings</PageTitle>
-			<Box sx={{ p: 2, display: "flex", flexDirection: "column", gap: 2 }} component={"main"}>
-				<SimpleCard title={"Account details"}>
-					<p>{session?.email}</p>
-				</SimpleCard>
-				<SimpleCard title={"Security"}>
-					<Box sx={{ display: "flex", alignItems: "center", gap: 2, m: 1 }}>
-						<Typography>2FA Account Security status: </Typography>
-						{!data && loading && (
-							<>
-								<Spinner />
-								Loading
-							</>
-						)}
-						{error && <strong>Could not retrieve status</strong>}
-						{data?.totpState === "DISABLED" && <strong>Disabled</strong>}
-						{data?.totpState === "ENABLED" && <span>Enabled</span>}
-						{data?.totpState === "NEEDS_VALIDATION" && <strong>Unverified</strong>}
-					</Box>
-					{data && data.totpState !== "ENABLED" && (
-						<Button onClick={() => setTotpDialogOpen(true)} fullWidth sx={{ justifyContent: "start" }}>
-							{data.totpState === "DISABLED" && "Enable 2 Factor Authentication"}
-							{data.totpState === "NEEDS_VALIDATION" && "Verify 2 Factor Authentication"}
-						</Button>
+		<MultiPageWrapper title={"Account settings"}>
+			<MultiPage title={"Account details"}>
+				<p>{session?.email}</p>
+			</MultiPage>
+			<MultiPage title={"Security"}>
+				<Box sx={{ display: "flex", alignItems: "center", gap: 2, m: 1 }}>
+					<Typography>2FA Account Security status: </Typography>
+					{!data && loading && (
+						<>
+							<Spinner />
+							Loading
+						</>
 					)}
-					<Button component={Link} to={"/account/changepassword"} sx={{ display: "block" }}>
-						Change password
+					{error && <strong>Could not retrieve status</strong>}
+					{data?.totpState === "DISABLED" && <strong>Disabled</strong>}
+					{data?.totpState === "ENABLED" && <span>Enabled</span>}
+					{data?.totpState === "NEEDS_VALIDATION" && <strong>Unverified</strong>}
+				</Box>
+				{data && data.totpState !== "ENABLED" && (
+					<Button onClick={() => setTotpDialogOpen(true)} fullWidth sx={{ justifyContent: "start" }}>
+						{data.totpState === "DISABLED" && "Enable 2 Factor Authentication"}
+						{data.totpState === "NEEDS_VALIDATION" && "Verify 2 Factor Authentication"}
 					</Button>
-					<Button
-						color={"error"}
-						onClick={() => setDestroySessionDialogOpen(true)}
-						fullWidth
-						sx={{ justifyContent: "start" }}
-					>
-						Log out everywhere
-					</Button>
-				</SimpleCard>
-			</Box>
-			<LogOutEverywhereDialog
-				open={destroySessionDialogOpen}
-				onClose={() => setDestroySessionDialogOpen(false)}
-			/>
-			{totpDialogOpen && <TotpDialog open={true} onClose={() => setTotpDialogOpen(false)} />}
-		</Container>
+				)}
+				<Button component={Link} to={"/account/changepassword"} sx={{ display: "block" }}>
+					Change password
+				</Button>
+				<Button
+					color={"error"}
+					onClick={() => setDestroySessionDialogOpen(true)}
+					fullWidth
+					sx={{ justifyContent: "start" }}
+				>
+					Log out everywhere
+				</Button>
+				<LogOutEverywhereDialog
+					open={destroySessionDialogOpen}
+					onClose={() => setDestroySessionDialogOpen(false)}
+				/>
+				{totpDialogOpen && <TotpDialog open={true} onClose={() => setTotpDialogOpen(false)} />}
+			</MultiPage>
+		</MultiPageWrapper>
 	);
 }
 
