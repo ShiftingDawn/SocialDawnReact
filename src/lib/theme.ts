@@ -33,6 +33,17 @@ const theme = createTheme({
 				"@global": { body: { fontFamily: "Raleway,serif" } },
 			},
 		},
+		MuiDialog: {
+			styleOverrides: {
+				container: {
+					backgroundColor: "transparent",
+					backgroundImage: "radial-gradient(transparent 1px, rgba(0,0,0,.1) 1px)",
+					backgroundSize: "4px 4px",
+					backdropFilter: "blur(8px)",
+					opacity: 0.1,
+				},
+			},
+		},
 	},
 });
 

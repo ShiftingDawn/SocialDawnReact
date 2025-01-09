@@ -40,6 +40,7 @@ import { fErr } from "@lib/flash.ts";
 import { useSession } from "@lib/session.context.ts";
 import { AddFriendDialog } from "$/AddFriendDialog.tsx";
 import { PendingRequestsDialog } from "$/PendingRequestsDialog.tsx";
+import { ReqAuth } from "$/ReqAuth.tsx";
 import { Spinner } from "$/Spinner.tsx";
 import { QUERY_GET_FRIENDS, QUERY_GET_FRIEND_REQUESTS } from "#/queries";
 import { FriendDTO, FriendRequestListDTO } from "#/schema";
@@ -94,7 +95,9 @@ function Drawer() {
 						</IconButton>
 					</Toolbar>
 					<Divider />
-					<Sidebar />
+					<ReqAuth>
+						<Sidebar />
+					</ReqAuth>
 				</MuiDrawer>
 			</Box>
 			{small && (

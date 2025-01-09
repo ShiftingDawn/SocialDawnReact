@@ -1,4 +1,6 @@
-import { Route, Routes } from "react-router";
+import { ReactNode } from "react";
+import { Navigate, Outlet, Route, Routes } from "react-router";
+import { useSession } from "@lib/session.context.ts";
 import PageAccountSettings from "@page/account/account_settings.page.tsx";
 import PageAccountChangePassword from "@page/account/change_password.page.tsx";
 import LoginPage from "@page/account/login.page.tsx";
@@ -12,11 +14,25 @@ export default function () {
 		<Routes>
 			<Route path={"/"} element={<HomePage />} />
 			<Route path={"*"} element={<NotFoundPage />} />
-			<Route path={"/login"} element={<LoginPage />} />
-			<Route path={"/register"} element={<RegisterPage />} />
-			<Route path={"/account"} element={<PageAccountSettings />} />
-			<Route path={"/account/changepassword"} element={<PageAccountChangePassword />} />
-			<Route path={"/dm/:friendId"} element={<PageDM />} />
+
+			<Route path={"/login"} element={noAuth(<LoginPage />, "/")} />
+			<Route path={"/register"} element={noAuth(<RegisterPage />, "/")} />
+			<Route path={"/account"} element={withAuth(<Outlet />, "/login")}>
+				<Route index element={<PageAccountSettings />} />
+				<Route path={"changepassword"} element={<PageAccountChangePassword />} />
+			</Route>
+
+			<Route path={"/dm/:friendId"} element={withAuth(<PageDM />, "/")} />
 		</Routes>
 	);
+}
+
+function withAuth(node: ReactNode, anonHref: string): ReactNode {
+	const { state } = useSession();
+	return state !== "authenticated" ? <Navigate to={anonHref} replace /> : node;
+}
+
+function noAuth(node: ReactNode, authHref: string): ReactNode {
+	const { state } = useSession();
+	return state === "authenticated" ? <Navigate to={authHref} replace /> : node;
 }

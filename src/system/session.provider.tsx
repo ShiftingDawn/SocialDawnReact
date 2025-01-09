@@ -3,6 +3,7 @@ import { Box, Typography } from "@mui/material";
 import { gql } from "@apollo/client";
 import Axios from "axios";
 import { apollo } from "@lib/api.ts";
+import { fErr } from "@lib/flash.ts";
 import { SessionContext } from "@lib/session.context.ts";
 import { Spinner } from "$/Spinner.tsx";
 import { SelfUserDTO } from "#/schema.ts";
@@ -61,11 +62,14 @@ export default function ({ children }: PC) {
 						}
 						break;
 				}
+			} catch (error) {
+				console.error(error);
+				fErr("Could not load session from server");
 			} finally {
 				setLoading(false);
 			}
 		};
-		InternalSessionStore.fetchSession("timer");
+		InternalSessionStore.fetchSession("force");
 
 		const interval = setInterval(() => {
 			if (InternalSessionStore.fetchSession) {
