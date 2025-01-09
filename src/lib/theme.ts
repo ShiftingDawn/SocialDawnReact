@@ -19,7 +19,7 @@ const theme = createTheme({
 				},
 				secondary: deepPurple,
 				background: {
-					default: "#121212",
+					default: "#050009",
 				},
 			},
 		},
