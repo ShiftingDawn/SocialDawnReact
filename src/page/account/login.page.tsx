@@ -1,13 +1,11 @@
-import { Container } from "@mui/material";
 import { LoginContainer } from "@sys/login.tsx";
-import { PageTitle } from "$/Text.tsx";
+import { PageWrapper } from "$/PageWrapper.tsx";
 
 function LoginPage() {
 	return (
-		<Container maxWidth={"xs"} sx={{ p: 3 }}>
-			<PageTitle>Sign in</PageTitle>
+		<PageWrapper title={"Sign in"} maxWidth={"xs"}>
 			<LoginContainer />
-		</Container>
+		</PageWrapper>
 	);
 }
 

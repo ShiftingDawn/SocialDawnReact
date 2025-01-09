@@ -1,30 +1,35 @@
 import { FormEventHandler, useState } from "react";
 import { Link, useNavigate } from "react-router";
-import { Button, Divider, Paper, Stack, TextField } from "@mui/material";
-import Axios from "axios";
-import axios from "axios";
+import { Box, Button, Divider, InputAdornment, TextField, Typography } from "@mui/material";
+import { Email, Lock, LockClock } from "@mui/icons-material";
+import useAxios from "axios-hooks";
 import { fErr, fSuccess } from "@lib/flash.ts";
 import { useSession } from "@lib/session.context.ts";
 import { LoginCodeRequestDTO, LoginRequestDTO, LoginResponseDTO } from "#/dto.ts";
 
 export function LoginContainer() {
+	const [{ loading: loadingLogin, data: dataLogin }, login] = useAxios<LoginResponseDTO>(
+		{
+			url: "/auth/login",
+			method: "post",
+		},
+		{ manual: true },
+	);
+	const [{ loading: loading2fa }, auth2fa] = useAxios({ url: "/auth/login/2fa", method: "post" }, { manual: true });
 	const navigate = useNavigate();
 	const [email, setEmail] = useState("");
 	const [password, setPassword] = useState("");
 	const { update: updateSession } = useSession();
-	const [totpToken, setTotpToken] = useState<string>();
 	const [totpCode, setTotpCode] = useState<string>("");
 
 	const tryLogin: FormEventHandler = (event) => {
 		event.preventDefault();
-		Axios.post<LoginResponseDTO>("/auth/login", { email: email, password: password } satisfies LoginRequestDTO)
+		login({ data: { email: email, password: password } satisfies LoginRequestDTO })
 			.then(({ data }) => {
-				if (data.token) {
-					setTotpToken(data.token);
-				} else {
+				if (!data.token) {
 					updateSession("signin").then(() => {
 						fSuccess("Welcome back!");
-						navigate("/");
+						navigate(0);
 					});
 				}
 			})
@@ -33,23 +38,25 @@ export function LoginContainer() {
 
 	const tryValidateToken: FormEventHandler = (event) => {
 		event.preventDefault();
-		if (totpToken && totpCode) {
-			axios
-				.post("/auth/login/2fa", { token: totpToken, code: totpCode } satisfies LoginCodeRequestDTO)
+		if (dataLogin?.token && totpCode) {
+			auth2fa({ data: { token: dataLogin.token, code: totpCode } satisfies LoginCodeRequestDTO })
 				.then(() => {
 					updateSession("signin").then(() => {
 						fSuccess("Welcome back!");
-						navigate("/");
+						navigate(0);
 					});
 				})
 				.catch(() => fErr("Could not sign in"));
 		}
 	};
 
-	return !totpToken ? (
-		<Paper sx={{ p: 2 }}>
-			<form onSubmit={tryLogin}>
-				<Stack spacing={2}>
+	return !dataLogin?.token ? (
+		<>
+			<form onSubmit={tryLogin} aria-disabled={loadingLogin}>
+				<Box sx={{ display: "flex", alignItems: "flex-end", mb: 4 }}>
+					<InputAdornment position={"start"}>
+						<Email fontSize={"large"} />
+					</InputAdornment>
 					<TextField
 						fullWidth
 						label={"Email"}
@@ -57,7 +64,14 @@ export function LoginContainer() {
 						autoComplete={"email"}
 						type={"email"}
 						onChange={(e) => setEmail(e.target.value)}
+						variant={"standard"}
+						id={"signinemail"}
 					/>
+				</Box>
+				<Box sx={{ display: "flex", alignItems: "flex-end", mb: 8 }}>
+					<InputAdornment position={"start"}>
+						<Lock fontSize={"large"} />
+					</InputAdornment>
 					<TextField
 						fullWidth
 						label={"Password"}
@@ -65,32 +79,47 @@ export function LoginContainer() {
 						autoComplete={"current-password"}
 						onChange={(e) => setPassword(e.target.value)}
 						type={"password"}
+						variant={"standard"}
+						id={"signinpassword"}
 					/>
-					<Button type={"submit"}>Sign in</Button>
-				</Stack>
+				</Box>
+				<Box sx={{ mb: 4 }}>
+					<Button type={"submit"} variant={"contained"} fullWidth disabled={loadingLogin}>
+						Sign in
+					</Button>
+				</Box>
 			</form>
-			<Divider />
-			<p>
-				Don't have an account yet? <Link to={"/register"}>Make one</Link>
-			</p>
-		</Paper>
+			<Divider>OR</Divider>
+			<Box sx={{ textAlign: "center", mt: 2 }}>
+				<Link to={"/register"} replace>
+					<Typography>Register a new account here</Typography>
+				</Link>
+			</Box>
+		</>
 	) : (
-		<Paper sx={{ p: 2 }}>
-			<form onSubmit={tryValidateToken}>
-				<Stack spacing={2}>
-					<TextField
-						autoFocus
-						fullWidth
-						label={"Enter 2 factor code"}
-						autoComplete={"one-time-code"}
-						type={"text"}
-						name={"totp"}
-						value={totpCode}
-						onChange={(e) => setTotpCode(e.currentTarget.value)}
-					/>
-					<Button type={"submit"}>Submit</Button>
-				</Stack>
-			</form>
-		</Paper>
+		<form onSubmit={tryValidateToken} aria-disabled={loading2fa}>
+			<Box sx={{ display: "flex", alignItems: "flex-end", mb: 4 }}>
+				<InputAdornment position={"start"}>
+					<LockClock fontSize={"large"} />
+				</InputAdornment>
+				<TextField
+					autoFocus
+					fullWidth
+					label={"Enter 2 factor code"}
+					autoComplete={"one-time-code"}
+					type={"text"}
+					name={"totp"}
+					value={totpCode}
+					onChange={(e) => setTotpCode(e.currentTarget.value)}
+					variant={"standard"}
+					id={"signin2fa"}
+				/>
+			</Box>
+			<Box>
+				<Button type={"submit"} variant={"contained"} fullWidth disabled={loading2fa}>
+					Submit
+				</Button>
+			</Box>
+		</form>
 	);
 }
